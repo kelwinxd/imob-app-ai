@@ -1,0 +1,41 @@
+{
+  "name": "@imob/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --clear-screen=false src/server.ts",
+    "start": "tsx src/server.ts",
+    "worker": "tsx src/worker.ts",
+    "db:generate": "drizzle-kit generate",
+    "typecheck": "tsc -p tsconfig.json",
+    "dev:mock": "cross-env AI_MOCK=true tsx watch --clear-screen=false src/server.ts"
+  },
+  "dependencies": {
+    "@imob/core": "*",
+    "@imob/shared": "*",
+    "@node-rs/argon2": "^2.2.2",
+    "archiver": "^8.0.0",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^18.0.9",
+    "drizzle-orm": "^0.45.4",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.2",
+    "helmet": "^8.3.0",
+    "multer": "^2.5.0",
+    "pg": "^8.23.1",
+    "pg-boss": "^10.4.2",
+    "qrcode": "^1.5.4",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/archiver": "^8.0.0",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/express": "^5.0.6",
+    "@types/multer": "^2.3.0",
+    "@types/pg": "^8.23.1",
+    "@types/qrcode": "^1.5.6",
+    "cross-env": "^10.1.0",
+    "drizzle-kit": "^0.31.11"
+  }
+}

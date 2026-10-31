@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: imob-postgres
+    environment:
+      POSTGRES_USER: imob
+      POSTGRES_PASSWORD: imob
+      POSTGRES_DB: imob
+    ports:
+      - "5440:5432"
+    volumes:
+      - imob-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U imob"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  imob-db:

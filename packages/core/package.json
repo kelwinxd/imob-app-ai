@@ -1,0 +1,19 @@
+{
+  "name": "@imob/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@imob/shared": "*",
+    "openai": "^6.49.0",
+    "pdfkit": "^0.20.2",
+    "sharp": "^0.35.5",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/pdfkit": "^0.17.7"
+  }
+}

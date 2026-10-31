@@ -1,0 +1,29 @@
+{
+  "version": "v1",
+  "base": "Edite esta foto real de um cômodo vazio para fazer um staging virtual: adicione apenas móveis e objetos de decoração soltos, de forma fotorrealista e coerente com a luz e a perspectiva da foto.",
+  "preserve": "Regras obrigatórias: não altere paredes, janelas, portas, piso, teto, rodapés, tomadas, interruptores, luminárias fixas, bancadas, armários embutidos, revestimentos nem a vista pelas janelas. Não mude cores ou materiais existentes. Mantenha exatamente a mesma perspectiva, enquadramento e iluminação natural. Não remova nada que já existe na foto. Não adicione pessoas, animais, textos, logos ou marcas d'água. Os móveis devem ter escala realista para o tamanho do cômodo e não podem bloquear portas nem janelas.",
+  "rooms": {
+    "sala": { "label": "sala de estar", "furniture": "sofá, poltrona, mesa de centro, tapete, rack ou aparador baixo, luminária de piso, almofadas e plantas" },
+    "quarto": { "label": "quarto", "furniture": "cama com roupa de cama, mesas de cabeceira, abajures, tapete e uma planta" },
+    "cozinha": { "label": "cozinha", "furniture": "banquetas ou mesa pequena se houver espaço livre, utensílios discretos sobre a bancada, fruteira e plantas pequenas; não instale eletrodomésticos nem armários novos" },
+    "banheiro": { "label": "banheiro", "furniture": "toalhas, tapete de banheiro, plantas pequenas e itens de higiene discretos" },
+    "sala_jantar": { "label": "sala de jantar", "furniture": "mesa de jantar com cadeiras, aparador, tapete, centro de mesa e plantas" },
+    "varanda": { "label": "varanda", "furniture": "poltronas ou cadeiras de área externa, mesa lateral, plantas em vasos e tapete de área externa" },
+    "escritorio": { "label": "escritório", "furniture": "mesa de trabalho, cadeira, estante baixa, luminária de mesa e plantas" },
+    "area_servico": { "label": "área de serviço", "furniture": "cesto de roupas, prateleira solta com itens de limpeza organizados e uma planta pequena" },
+    "outro": { "label": "cômodo", "furniture": "móveis e objetos de decoração adequados ao uso aparente do cômodo" }
+  },
+  "styles": {
+    "moderno": "Estilo moderno: linhas retas, tons neutros com um ponto de cor, madeira clara e metal preto",
+    "escandinavo": "Estilo escandinavo: madeira clara, tecidos naturais, branco e cinza claro, aconchegante e sem excesso",
+    "classico": "Estilo clássico: madeira escura, tecidos encorpados, molduras discretas, tons creme e terrosos",
+    "industrial": "Estilo industrial: couro, metal escuro, madeira de demolição, tons de cinza e marrom",
+    "minimalista": "Estilo minimalista: poucos móveis, formas simples, paleta branca, bege e cinza",
+    "praiano": "Estilo praiano: fibras naturais, linho, tons de areia, branco e azul suave"
+  },
+  "standards": {
+    "economico": "Padrão econômico: móveis simples e funcionais, como os de lojas populares, sem peças de design ou de luxo, em quantidade enxuta",
+    "medio": "Padrão médio: móveis de boa qualidade e bom acabamento, sem peças de luxo",
+    "alto": "Padrão alto: móveis de design e materiais nobres, sem exageros"
+  }
+}
