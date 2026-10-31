@@ -1,8 +1,9 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
-import type { CreatePropertyInput, PropertyDetailDTO, PropertySummaryDTO } from "@imob/shared";
+import type { CreatePropertyInput, PropertyDetailDTO, PropertySummaryDTO, UpdatePropertyInput } from "@imob/shared";
 import { db } from "../../db/client";
-import { generations, photos, properties, variations, type PhotoRow, type PropertyRow } from "../../db/schema";
+import { photos, properties, type PropertyRow } from "../../db/schema";
 import { notFound } from "../../shared/http";
+import { stagingSummariesFor } from "../stagings/stagings.model";
 import { toPropertyDetailDTO, toPropertySummaryDTO } from "./properties.mapper";
 
 export async function getOwnedProperty(userId: string, propertyId: string): Promise<PropertyRow> {
@@ -14,30 +15,29 @@ export async function getOwnedProperty(userId: string, propertyId: string): Prom
 export async function listProperties(userId: string): Promise<PropertySummaryDTO[]> {
   const rows = await db.select().from(properties).where(eq(properties.userId, userId)).orderBy(desc(properties.createdAt));
   if (rows.length === 0) return [];
-  const allPhotos = await db.select().from(photos).where(inArray(photos.propertyId, rows.map((r) => r.id)));
-  return rows.map((p) =>
-    toPropertySummaryDTO(
-      p,
-      allPhotos.filter((ph) => ph.propertyId === p.id).sort((a, b) => a.position - b.position),
-    ),
-  );
+  const ids = rows.map((r) => r.id);
+  const allPhotos = await db.select().from(photos).where(inArray(photos.propertyId, ids));
+  const summaries = await stagingSummariesFor(ids, allPhotos);
+  return rows.map((p) => toPropertySummaryDTO(p, allPhotos.filter((ph) => ph.propertyId === p.id), summaries.get(p.id) ?? []));
 }
 
 export async function createProperty(userId: string, input: CreatePropertyInput): Promise<PropertyDetailDTO> {
   const [p] = await db.insert(properties).values({ userId, title: input.title }).returning();
-  return toPropertyDetailDTO(p, [], [], []);
+  return toPropertyDetailDTO(p, [], []);
+}
+
+// Dados da landing não entram no dossiê: a página lê o valor atual, sem precisar publicar de novo.
+export async function updateProperty(userId: string, propertyId: string, input: UpdatePropertyInput): Promise<PropertyDetailDTO> {
+  await getOwnedProperty(userId, propertyId);
+  const patch = Object.fromEntries(Object.entries(input).filter(([, v]) => v !== undefined));
+  if (Object.keys(patch).length) await db.update(properties).set(patch).where(eq(properties.id, propertyId));
+  return getPropertyDetail(userId, propertyId);
 }
 
 export async function loadPropertyDetail(property: PropertyRow): Promise<PropertyDetailDTO> {
-  const photoRows: PhotoRow[] = await db.select().from(photos).where(eq(photos.propertyId, property.id));
-  const genIds = photoRows.map((ph) => ph.currentGenerationId).filter((id): id is string => Boolean(id));
-  const [genRows, varRows] = genIds.length
-    ? await Promise.all([
-        db.select().from(generations).where(inArray(generations.id, genIds)),
-        db.select().from(variations).where(inArray(variations.generationId, genIds)),
-      ])
-    : [[], []];
-  return toPropertyDetailDTO(property, photoRows, genRows, varRows);
+  const photoRows = await db.select().from(photos).where(eq(photos.propertyId, property.id));
+  const summaries = await stagingSummariesFor([property.id], photoRows);
+  return toPropertyDetailDTO(property, photoRows, summaries.get(property.id) ?? []);
 }
 
 export async function getPropertyDetail(userId: string, propertyId: string): Promise<PropertyDetailDTO> {

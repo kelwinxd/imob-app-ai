@@ -17,7 +17,7 @@ interface StepperProps<T extends string> {
 export function Stepper<T extends string>({ steps, activeId, completed, reachable, onSelect }: StepperProps<T>) {
   return (
     <nav aria-label="Etapas">
-      <ol className="grid grid-cols-4 gap-1.5">
+      <ol className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }}>
         {steps.map((step, i) => {
           const active = step.id === activeId;
           const done = completed.has(step.id) && !active;

@@ -1,5 +1,5 @@
 import sharp from "sharp";
-import type { Quality, Room, Standard, Style, VariationCheck, Verdict } from "@imob/shared";
+import type { FurnitureColorId, Quality, Room, Standard, Style, VariationCheck, Verdict } from "@imob/shared";
 import type { Ai } from "./ai";
 import { fitExactly, matchingSize, sha256, structureEdgeScore } from "./imaging";
 import { buildPrompt, type Templates } from "./prompt";
@@ -35,6 +35,8 @@ export interface GenerationRequest {
   standard: Standard;
   quality: Quality;
   variations?: number;
+  furnitureColors?: readonly FurnitureColorId[];
+  references?: Buffer[];
   longEdge?: number;
   fixedSize?: { width: number; height: number };
   edgeThreshold?: number;
@@ -65,9 +67,13 @@ export async function runGeneration(req: GenerationRequest): Promise<GenerationO
   const size = req.fixedSize ?? matchingSize(width, height, req.longEdge ?? DEFAULT_LONG_EDGE);
   const sizeStr = `${size.width}x${size.height}`;
   const input = await fitExactly(req.working, size.width, size.height);
-  const prompt = buildPrompt(req.templates, req.room, req.style, req.standard);
+  const references = req.references ?? [];
+  const prompt = buildPrompt(req.templates, req.room, req.style, req.standard, {
+    furnitureColors: req.furnitureColors,
+    hasReferences: references.length > 0,
+  });
   const createdAt = new Date().toISOString();
-  const result = await req.ai.generate(input, prompt, sizeStr, req.variations ?? 3, req.quality);
+  const result = await req.ai.generate(input, prompt, sizeStr, req.variations ?? 3, req.quality, references);
 
   const variations = await Promise.all(
     result.images.map(async (raw, i) => {

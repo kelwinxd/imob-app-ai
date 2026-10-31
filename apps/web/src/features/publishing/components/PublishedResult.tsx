@@ -1,9 +1,9 @@
-import type { PropertyDetailDTO } from "@imob/shared";
+import type { StagingDetailDTO } from "@imob/shared";
 import { Button, LinkButton } from "../../../shared/ui/Button";
 import { Card } from "../../../shared/ui/Card";
 import { CheckIcon, CopyIcon, DownloadIcon, ExternalIcon } from "../../../shared/ui/icons";
 
-type Published = NonNullable<PropertyDetailDTO["published"]>;
+type Published = NonNullable<StagingDetailDTO["published"]>;
 
 interface PublishedResultProps {
   published: Published;

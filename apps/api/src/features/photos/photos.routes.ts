@@ -1,7 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
 import { MAX_PHOTO_BYTES, MAX_PHOTOS_PER_PROPERTY, UpdatePhotoInputSchema } from "@imob/shared";
-import { notFound, parseId, parseInput, sendStored } from "../../shared/http";
+import { parseId, parseInput, sendStored } from "../../shared/http";
 import { storage } from "../../shared/storage";
 import { currentUser } from "../auth/auth.middleware";
 import { getOwnedPhoto, retryClassification, updatePhoto, uploadPhotos } from "./photos.service";
@@ -36,10 +36,4 @@ photosRouter.get("/photos/:id/thumb", async (req, res) => {
 photosRouter.get("/photos/:id/view", async (req, res) => {
   const { photo } = await getOwnedPhoto(currentUser(req).id, parseId(req.params.id));
   await sendStored(res, storage, photo.viewKey, "image/jpeg", "immutable");
-});
-
-photosRouter.get("/photos/:id/final", async (req, res) => {
-  const { photo } = await getOwnedPhoto(currentUser(req).id, parseId(req.params.id));
-  if (!photo.final) throw notFound("Esta foto ainda não foi publicada.");
-  await sendStored(res, storage, photo.final.key, "image/jpeg", "revalidate");
 });

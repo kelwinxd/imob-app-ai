@@ -1,63 +1,85 @@
-import type { PropertyDetailDTO } from "@imob/shared";
+import type { StagingDetailDTO } from "@imob/shared";
+import { plural } from "../../../shared/lib/format";
 import { Alert } from "../../../shared/ui/Alert";
 import { Button } from "../../../shared/ui/Button";
-import { ArrowRightIcon } from "../../../shared/ui/icons";
-import { ProgressBar } from "../../../shared/ui/ProgressBar";
-import { StickyActions } from "../../../shared/ui/StickyActions";
-import { PhotoChoiceCard } from "../components/PhotoChoiceCard";
-import { useRegeneratePhoto, useVariationChoice } from "../hooks/useGeneration";
+import { Card } from "../../../shared/ui/Card";
+import { SparklesIcon } from "../../../shared/ui/icons";
+import { ChoicePhotoList } from "../components/ChoicePhotoList";
+import { ImageStage } from "../components/ImageStage";
+import { StyleSummary } from "../components/StyleSummary";
+import { VariationCountPicker } from "../components/VariationCountPicker";
+import { VariationPanel } from "../components/VariationPanel";
+import { useChoiceState } from "../hooks/useChoiceState";
+import { useGenerate, useVariationChoice } from "../hooks/useGeneration";
 
-export function ChoiceStep({ property, onContinue, onChangeStyle }: { property: PropertyDetailDTO; onContinue: () => void; onChangeStyle: () => void }) {
-  const choice = useVariationChoice();
-  const regenerate = useRegeneratePhoto();
-  const included = property.photos.filter((p) => p.include);
-  const done = included.filter((p) => p.status === "generated").length;
-  const generating = included.filter((p) => p.status === "generating").length;
-  const failed = included.filter((p) => p.status === "failed").length;
-  const locked = property.status === "publishing";
-  const canContinue = property.status === "choosing" || property.status === "published" || property.status === "publish_failed";
+export function ChoiceStep({ staging, onEditStyle }: { staging: StagingDetailDTO; onEditStyle: () => void }) {
+  const state = useChoiceState(staging);
+  const generate = useGenerate(staging.id);
+  const choice = useVariationChoice(staging.id);
+  const locked = staging.status === "publishing";
+  const selected = state.selected;
+
+  if (state.photos.length === 0) {
+    return <Alert tone="warning" title="Nenhuma foto marcada">Volte à etapa Estilo e marque as fotos que esta decoração deve usar.</Alert>;
+  }
 
   return (
-    <section className="flex flex-col gap-5" aria-labelledby="escolha-titulo">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 id="escolha-titulo" className="text-lg font-semibold">Escolha uma variação por foto</h2>
-          <p className="mt-1 text-sm text-stone-600">
-            Cada variação passa pela trava de estrutura. As reprovadas não podem ser publicadas.
-          </p>
+    <section className="grid gap-5 lg:grid-cols-10" aria-label="Escolha das variações">
+      <div className="order-1 lg:order-2 lg:col-span-7">
+        <div className="lg:sticky lg:top-20">
+          <ImageStage src={state.stage.src} label={state.stage.label} overlay={state.stage.overlay} />
         </div>
-        <Button variant="ghost" size="sm" onClick={onChangeStyle} disabled={locked || generating > 0}>
-          Mudar estilo
-        </Button>
       </div>
 
-      {generating > 0 && <ProgressBar value={(done / Math.max(1, included.length)) * 100} label={`${done} de ${included.length} fotos prontas`} />}
-      {failed > 0 && <Alert tone="danger">{failed === 1 ? "Uma foto falhou." : `${failed} fotos falharam.`} Use "Tentar de novo" no cartão da foto.</Alert>}
-      {choice.error && <Alert tone="danger">{choice.error}</Alert>}
-      {regenerate.error && <Alert tone="danger">{regenerate.error}</Alert>}
+      <aside className="order-2 flex flex-col gap-4 lg:order-1 lg:col-span-3">
+        <StyleSummary
+          style={staging.style}
+          standard={staging.standard}
+          colors={staging.furnitureColors}
+          referenceCount={staging.references.length}
+          onEdit={onEditStyle}
+        />
 
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        {included.map((photo, i) => (
-          <PhotoChoiceCard
-            key={photo.id}
-            photo={photo}
-            index={i + 1}
-            locked={locked}
-            busy={choice.pendingPhotoId === photo.id || regenerate.pendingPhotoId === photo.id}
-            pendingReviewVariationId={choice.pendingReview?.photoId === photo.id ? choice.pendingReview.variationId : null}
-            onChoose={(v) => choice.choose(photo, v)}
-            onConfirmReview={choice.confirmReview}
-            onCancelReview={choice.cancelReview}
-            onRegenerate={() => regenerate.regenerate(photo.id)}
-          />
-        ))}
-      </div>
+        <Card className="flex flex-col gap-3 p-3">
+          <VariationCountPicker value={state.variationCount} onChange={state.setVariationCount} disabled={generate.starting || locked} />
+          <Button
+            fullWidth
+            icon={<SparklesIcon size={18} />}
+            loading={generate.starting && !generate.startingPhotoId}
+            disabled={state.toGenerate === 0 || locked}
+            onClick={() => generate.generateAll(state.variationCount)}
+          >
+            {state.toGenerate > 0 ? `Gerar ${plural(state.toGenerate, "foto", "fotos")}` : state.generating > 0 ? "Gerando…" : "Tudo gerado"}
+          </Button>
+          <p className="text-[11px] leading-snug text-stone-500">
+            {state.toGenerate > 0
+              ? `${state.toGenerate * state.variationCount} imagens no total. Cada variação passa pela trava de estrutura.`
+              : "Para mais opções de uma foto, use “Gerar novas variações” abaixo dela."}
+          </p>
+          {generate.error && <Alert tone="danger">{generate.error}</Alert>}
+        </Card>
 
-      <StickyActions hint={canContinue ? "Tudo pronto para publicar" : generating > 0 ? "Aguarde terminar a decoração" : "Resolva as fotos com erro para continuar"}>
-        <Button size="lg" onClick={onContinue} disabled={!canContinue} icon={<ArrowRightIcon size={18} />}>
-          Revisar e publicar
-        </Button>
-      </StickyActions>
+        <ChoicePhotoList photos={state.photos} selectedId={selected?.photoId ?? null} onSelect={state.select} />
+
+        {selected && (
+          <Card className="p-3">
+            <VariationPanel
+              photo={selected}
+              focus={state.focus}
+              onFocus={state.setFocus}
+              pendingReviewVariationId={choice.pendingReview?.photoId === selected.photoId ? choice.pendingReview.variationId : null}
+              busy={choice.choosing || generate.startingPhotoId === selected.photoId}
+              locked={locked}
+              variationCount={state.variationCount}
+              onChoose={(v) => choice.choose(selected, v)}
+              onConfirmReview={choice.confirmReview}
+              onCancelReview={choice.cancelReview}
+              onRegenerate={() => generate.generatePhoto(selected.photoId, state.variationCount)}
+            />
+            {choice.error && <Alert tone="danger" className="mt-3">{choice.error}</Alert>}
+          </Card>
+        )}
+      </aside>
     </section>
   );
 }

@@ -16,6 +16,12 @@ npm run dev               # API + web com a OpenAI de verdade
 
 Abra http://localhost:5300. A API roda em http://localhost:4600 e aplica as migrações sozinha ao subir.
 
+**Antivírus que inspeciona HTTPS (ex.: Avast):** as chamadas à OpenAI falham com `Connection error` / `UNABLE_TO_VERIFY_LEAF_SIGNATURE`, porque o Node não confia no certificado do antivírus. Aponte o Node para esse certificado uma vez (PowerShell) e abra um terminal novo:
+
+```powershell
+[Environment]::SetEnvironmentVariable('NODE_EXTRA_CA_CERTS', 'C:\ProgramData\Avast Software\Avast\wscert.pem', 'User')
+```
+
 ### Estrutura
 
 ```
@@ -37,9 +43,20 @@ packages/
   core/         geração, trava, selo, página pública e dossiê (usado pela API e pelo script)
     prompts/templates.json    instruções versionadas
 scripts/concierge/  script da etapa 0
+scripts/style-examples.ts  gera as miniaturas de cada estilo (apps/web/public/styles)
 ```
 
-Fluxo do app: **Fotos** (upload e confirmação de cômodo) → **Estilo** → **Escolha** (3 variações por foto, com a trava) → **Publicar** (selo, formatos de portal, página `/i/:slug`, QR e dossiê).
+Fluxo do app:
+
+- **Imóvel:** **Fotos** (upload e confirmação de cômodo) → **Anúncio** (preço, área, quartos, bairro, descrição) → **Decorações** (cards).
+- **Cada decoração:** **Estilo** (estilo, padrão, cores dos móveis e fotos de referência opcionais, quais fotos usar) → **Escolha** (gerar 1 a 3 variações por foto, trava de estrutura, escolher) → **Publicar** (selo, formatos de portal, landing `/i/:slug` com a marca, QR e dossiê).
+- **Minha marca:** logo, nome, cor, WhatsApp e CRECI usados no topo de todas as landings. Marca e dados do anúncio são lidos quando a página abre, então mudanças aparecem sem publicar de novo.
+
+Para refazer as miniaturas dos estilos (gasta 6 gerações):
+
+```bash
+npx tsx scripts/style-examples.ts fotos/apto42/sala.png
+```
 
 Os arquivos ficam em `data/storage/` (fora do git). Os originais nunca são alterados.
 

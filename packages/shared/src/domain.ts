@@ -34,6 +34,24 @@ export const STANDARD_INFO: Record<Standard, { label: string; description: strin
   alto: { label: "Alto", description: "Design e materiais nobres" },
 };
 
+export const FURNITURE_COLORS = [
+  { id: "branco", label: "Branco", hex: "#f4f3ef", prompt: "branco" },
+  { id: "bege", label: "Bege", hex: "#d8c7a8", prompt: "bege e areia" },
+  { id: "cinza", label: "Cinza claro", hex: "#b9bbbd", prompt: "cinza claro" },
+  { id: "grafite", label: "Grafite", hex: "#4a4d52", prompt: "grafite" },
+  { id: "preto", label: "Preto", hex: "#1f1f1f", prompt: "preto" },
+  { id: "madeira_clara", label: "Madeira clara", hex: "#d2a877", prompt: "madeira clara natural" },
+  { id: "madeira_escura", label: "Madeira escura", hex: "#6b4429", prompt: "madeira escura" },
+  { id: "verde", label: "Verde", hex: "#6f8a5e", prompt: "verde oliva" },
+  { id: "azul", label: "Azul", hex: "#4f6f8f", prompt: "azul petróleo" },
+  { id: "terracota", label: "Terracota", hex: "#c0694a", prompt: "terracota" },
+  { id: "mostarda", label: "Mostarda", hex: "#d1a23a", prompt: "amarelo mostarda" },
+] as const;
+export const FURNITURE_COLOR_IDS = FURNITURE_COLORS.map((c) => c.id) as unknown as readonly [FurnitureColorId, ...FurnitureColorId[]];
+export type FurnitureColorId = (typeof FURNITURE_COLORS)[number]["id"];
+export const MAX_FURNITURE_COLORS = 3;
+export const MAX_REFERENCE_IMAGES = 4;
+
 export const QUALITIES = ["low", "medium", "high"] as const;
 export type Quality = (typeof QUALITIES)[number];
 

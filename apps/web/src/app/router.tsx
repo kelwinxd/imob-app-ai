@@ -5,6 +5,8 @@ import { GuestLayout, ProtectedLayout } from "../features/auth/containers/RouteG
 import { NewPropertyPage } from "../features/properties/pages/NewPropertyPage";
 import { PropertiesPage } from "../features/properties/pages/PropertiesPage";
 import { PropertyPage } from "../features/properties/pages/PropertyPage";
+import { ProfilePage } from "../features/profile/pages/ProfilePage";
+import { StagingPage } from "../features/stagings/pages/StagingPage";
 import { EmptyState } from "../shared/ui/EmptyState";
 import { buttonClasses } from "../shared/ui/Button";
 
@@ -30,6 +32,8 @@ export const router = createBrowserRouter([
       { path: "/", element: <PropertiesPage /> },
       { path: "/imoveis/novo", element: <NewPropertyPage /> },
       { path: "/imoveis/:id", element: <PropertyPage /> },
+      { path: "/imoveis/:id/decoracoes/:stagingId", element: <StagingPage /> },
+      { path: "/perfil", element: <ProfilePage /> },
     ],
   },
   { path: "*", element: <NotFound /> },

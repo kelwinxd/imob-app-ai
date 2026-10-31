@@ -3,14 +3,14 @@ import { env } from "../env";
 
 export const QUEUES = {
   classifyPhoto: "photo-classify",
-  generatePhoto: "photo-generate",
-  publishProperty: "property-publish",
+  generatePhoto: "staging-photo-generate",
+  publishStaging: "staging-publish",
 } as const;
 
 export interface JobPayloads {
   [QUEUES.classifyPhoto]: { photoId: string };
-  [QUEUES.generatePhoto]: { photoId: string };
-  [QUEUES.publishProperty]: { propertyId: string };
+  [QUEUES.generatePhoto]: { stagingId: string; photoId: string; variations: number };
+  [QUEUES.publishStaging]: { stagingId: string };
 }
 
 type QueueName = keyof JobPayloads;

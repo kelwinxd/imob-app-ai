@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { CreatePropertyInputSchema } from "@imob/shared";
+import { CreatePropertyInputSchema, UpdatePropertyInputSchema } from "@imob/shared";
 import { parseId, parseInput } from "../../shared/http";
 import { currentUser } from "../auth/auth.middleware";
-import { createProperty, getPropertyDetail, listProperties } from "./properties.service";
+import { createProperty, getPropertyDetail, listProperties, updateProperty } from "./properties.service";
 
 export const propertiesRouter = Router();
 
@@ -16,4 +16,8 @@ propertiesRouter.post("/", async (req, res) => {
 
 propertiesRouter.get("/:id", async (req, res) => {
   res.json(await getPropertyDetail(currentUser(req).id, parseId(req.params.id)));
+});
+
+propertiesRouter.patch("/:id", async (req, res) => {
+  res.json(await updateProperty(currentUser(req).id, parseId(req.params.id), parseInput(UpdatePropertyInputSchema, req.body)));
 });

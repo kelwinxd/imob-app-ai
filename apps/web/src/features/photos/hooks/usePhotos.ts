@@ -9,6 +9,8 @@ import { useApplyPropertyDetail } from "../../properties/hooks/useProperties";
 import { photosApi } from "../api/photos.api";
 
 const ACCEPTED = new Set<string>(ACCEPTED_IMAGE_TYPES);
+
+export const uploadMutationKey = (propertyId: string) => ["upload-photos", propertyId] as const;
 const MAX_MB = Math.round(MAX_PHOTO_BYTES / 1024 / 1024);
 
 export function usePhotoUpload(property: PropertyDetailDTO) {
@@ -18,6 +20,7 @@ export function usePhotoUpload(property: PropertyDetailDTO) {
   const remaining = Math.max(0, MAX_PHOTOS_PER_PROPERTY - property.photos.length);
 
   const mutation = useMutation({
+    mutationKey: uploadMutationKey(property.id),
     mutationFn: (files: File[]) => photosApi.upload(property.id, files, setProgress),
     onSuccess: apply,
     onSettled: () => setProgress(0),

@@ -8,6 +8,27 @@
       "when": 1793320223844,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793472807217,
+      "tag": "0001_landing",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793473310483,
+      "tag": "0002_decoracoes_add",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793473347486,
+      "tag": "0003_decoracoes_drop",
+      "breakpoints": true
     }
   ]
 }

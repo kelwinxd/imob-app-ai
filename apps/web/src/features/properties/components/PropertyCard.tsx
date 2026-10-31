@@ -27,8 +27,10 @@ export function PropertyCard({ property }: { property: PropertySummaryDTO }) {
           <PropertyStatusBadge status={property.status} />
         </div>
         <p className="text-xs text-stone-500">
-          {plural(property.photoCount, "foto", "fotos")} · criado em {formatDate(property.createdAt)}
+          {plural(property.photoCount, "foto", "fotos")} · {plural(property.stagingCount, "decoração", "decorações")}
+          {property.publishedCount > 0 && ` · ${plural(property.publishedCount, "publicada", "publicadas")}`}
         </p>
+        <p className="text-xs text-stone-400">Criado em {formatDate(property.createdAt)}</p>
       </div>
     </Link>
   );

@@ -6,20 +6,18 @@ import { photos, properties, variations } from "../../db/schema";
 import { notFound, parseId, parseInput, sendStored } from "../../shared/http";
 import { storage } from "../../shared/storage";
 import { currentUser } from "../auth/auth.middleware";
-import { chooseVariation, regeneratePhoto, startGeneration } from "./generation.service";
+import { chooseVariation, startGeneration } from "./generation.service";
 
 export const generationRouter = Router();
 
-generationRouter.post("/properties/:id/generate", async (req, res) => {
-  res.json(await startGeneration(currentUser(req).id, parseId(req.params.id), parseInput(GenerateInputSchema, req.body)));
+generationRouter.post("/stagings/:id/generate", async (req, res) => {
+  res.json(await startGeneration(currentUser(req).id, parseId(req.params.id), parseInput(GenerateInputSchema, req.body ?? {})));
 });
 
-generationRouter.post("/photos/:id/regenerate", async (req, res) => {
-  res.json(await regeneratePhoto(currentUser(req).id, parseId(req.params.id)));
-});
-
-generationRouter.post("/photos/:id/choose", async (req, res) => {
-  res.json(await chooseVariation(currentUser(req).id, parseId(req.params.id), parseInput(ChooseVariationInputSchema, req.body)));
+generationRouter.post("/stagings/:id/photos/:photoId/choose", async (req, res) => {
+  res.json(
+    await chooseVariation(currentUser(req).id, parseId(req.params.id), parseId(req.params.photoId), parseInput(ChooseVariationInputSchema, req.body)),
+  );
 });
 
 async function ownedVariation(userId: string, variationId: string) {

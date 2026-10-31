@@ -1,16 +1,16 @@
-import { ROOM_LABELS, type PhotoDTO } from "@imob/shared";
+import { ROOM_LABELS, type StagingPhotoDTO } from "@imob/shared";
 import { Card } from "../../../shared/ui/Card";
 import { ShieldIcon } from "../../../shared/ui/icons";
 import { VerdictBadge } from "../../generation/components/VerdictBadge";
 
 const STEPS = [
-  "Selo descritivo em cada foto, com o link da página original",
+  "Selo descritivo em cada foto, com o link da página",
   "Versões no tamanho de Zap, Viva Real, OLX e Instagram",
-  "Página pública antes/depois com QR code",
+  "Landing do imóvel com a sua marca, antes/depois e QR code",
   "Dossiê em PDF com hashes e o resultado da trava",
 ];
 
-export function PublishPreview({ photos }: { photos: PhotoDTO[] }) {
+export function PublishPreview({ photos }: { photos: StagingPhotoDTO[] }) {
   return (
     <div className="flex flex-col gap-4">
       <Card className="p-4">
@@ -25,7 +25,7 @@ export function PublishPreview({ photos }: { photos: PhotoDTO[] }) {
         {photos.map((p) => {
           const v = p.variations.find((x) => x.id === p.chosenVariationId);
           return (
-            <figure key={p.id} className="overflow-hidden rounded-xl border border-stone-200 bg-white">
+            <figure key={p.photoId} className="overflow-hidden rounded-xl border border-stone-200 bg-white">
               <img src={p.finalUrl ?? v?.previewUrl ?? p.thumbUrl} alt="" className="aspect-[4/3] w-full object-cover" loading="lazy" />
               <figcaption className="flex flex-col gap-1 p-2">
                 <span className="truncate text-xs font-medium">{p.roomConfirmed ? ROOM_LABELS[p.roomConfirmed] : "Foto"}</span>

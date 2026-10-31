@@ -51,6 +51,14 @@ export const keys = {
     `${keys.photoDir(propertyId, photoId)}/generations/${generationId}/v${index}-preview.jpg`,
   final: (propertyId: string, photoId: string) => `${keys.photoDir(propertyId, photoId)}/final.jpg`,
   portal: (propertyId: string, photoId: string, portal: string) => `${keys.photoDir(propertyId, photoId)}/portals/${portal}.jpg`,
+  stagingDir: (propertyId: string, stagingId: string) => `properties/${propertyId}/stagings/${stagingId}`,
+  reference: (propertyId: string, stagingId: string, refId: string) => `${keys.stagingDir(propertyId, stagingId)}/references/${refId}.jpg`,
+  stagingFinal: (propertyId: string, stagingId: string, photoId: string) => `${keys.stagingDir(propertyId, stagingId)}/photos/${photoId}/final.jpg`,
+  stagingPortal: (propertyId: string, stagingId: string, photoId: string, portal: string) =>
+    `${keys.stagingDir(propertyId, stagingId)}/photos/${photoId}/portals/${portal}.jpg`,
+  stagingQr: (propertyId: string, stagingId: string) => `${keys.stagingDir(propertyId, stagingId)}/qrcode.png`,
+  stagingDossier: (propertyId: string, stagingId: string) => `${keys.stagingDir(propertyId, stagingId)}/dossier.pdf`,
+  logo: (userId: string, hash: string) => `profiles/${userId}/logo-${hash.slice(0, 12)}.png`,
   qrcode: (propertyId: string) => `properties/${propertyId}/qrcode.png`,
   dossier: (propertyId: string) => `properties/${propertyId}/dossier.pdf`,
 };

@@ -1,23 +1,16 @@
 import type { PropertyDetailDTO } from "@imob/shared";
 import { plural } from "../../../shared/lib/format";
 import { Alert } from "../../../shared/ui/Alert";
-import { Button } from "../../../shared/ui/Button";
-import { ArrowRightIcon } from "../../../shared/ui/icons";
-import { StickyActions } from "../../../shared/ui/StickyActions";
 import { PhotoDropzone } from "../components/PhotoDropzone";
 import { PhotoRoomCard } from "../components/PhotoRoomCard";
 import { usePhotoUpload, useRetryClassification, useUpdatePhoto } from "../hooks/usePhotos";
 
-export function PhotosStep({ property, onContinue }: { property: PropertyDetailDTO; onContinue: () => void }) {
+export function PhotosStep({ property }: { property: PropertyDetailDTO }) {
   const upload = usePhotoUpload(property);
   const update = useUpdatePhoto();
   const retry = useRetryClassification();
 
-  const locked = property.status === "publishing";
   const classifying = property.photos.filter((p) => p.status === "classifying").length;
-  const included = property.photos.filter((p) => p.include);
-  const missingRoom = included.some((p) => !p.roomConfirmed);
-  const canContinue = included.length > 0 && classifying === 0 && !missingRoom && !upload.uploading;
   const hasPhotos = property.photos.length > 0;
 
   return (
@@ -25,7 +18,7 @@ export function PhotosStep({ property, onContinue }: { property: PropertyDetailD
       <div>
         <h2 id="fotos-titulo" className="text-lg font-semibold">Fotos e cômodos</h2>
         <p className="mt-1 text-sm text-stone-600">
-          A IA sugere o cômodo de cada foto. Confira, corrija se precisar e desmarque as que não devem ser decoradas.
+          Envie as fotos uma vez. A IA sugere o cômodo de cada uma; confira e corrija se precisar. Cada decoração escolhe depois quais fotos usar.
         </p>
       </div>
 
@@ -50,23 +43,14 @@ export function PhotosStep({ property, onContinue }: { property: PropertyDetailD
             <PhotoRoomCard
               key={photo.id}
               photo={photo}
-              locked={locked}
               busy={update.pendingPhotoId === photo.id || retry.pendingPhotoId === photo.id}
               onRoomChange={(room) => update.update(photo.id, { roomConfirmed: room })}
-              onIncludeChange={(include) => update.update(photo.id, { include })}
               onRetry={() => retry.retry(photo.id)}
             />
           ))}
         </div>
       )}
 
-      {hasPhotos && (
-        <StickyActions hint={`${plural(included.length, "foto será decorada", "fotos serão decoradas")} · 3 variações cada`}>
-          <Button size="lg" onClick={onContinue} disabled={!canContinue} icon={<ArrowRightIcon size={18} />}>
-            Escolher estilo
-          </Button>
-        </StickyActions>
-      )}
     </section>
   );
 }

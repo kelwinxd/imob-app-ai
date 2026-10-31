@@ -1,5 +1,7 @@
 {
-  "version": "v1",
+  "version": "v2",
+  "colors": "Cores dos móveis e tecidos: use predominantemente {cores}, combinando com o estilo.",
+  "references": "A primeira imagem é o cômodo a ser decorado. As demais imagens são referências de móveis enviadas pelo corretor: use móveis com forma, cor e material parecidos com os das referências quando fizerem sentido para este cômodo, ajustando a escala ao espaço. Não copie o fundo nem outros elementos das imagens de referência.",
   "base": "Edite esta foto real de um cômodo vazio para fazer um staging virtual: adicione apenas móveis e objetos de decoração soltos, de forma fotorrealista e coerente com a luz e a perspectiva da foto.",
   "preserve": "Regras obrigatórias: não altere paredes, janelas, portas, piso, teto, rodapés, tomadas, interruptores, luminárias fixas, bancadas, armários embutidos, revestimentos nem a vista pelas janelas. Não mude cores ou materiais existentes. Mantenha exatamente a mesma perspectiva, enquadramento e iluminação natural. Não remova nada que já existe na foto. Não adicione pessoas, animais, textos, logos ou marcas d'água. Os móveis devem ter escala realista para o tamanho do cômodo e não podem bloquear portas nem janelas.",
   "rooms": {

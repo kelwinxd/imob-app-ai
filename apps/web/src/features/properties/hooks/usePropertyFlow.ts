@@ -1,71 +1,51 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import type { PropertyDetailDTO } from "@imob/shared";
+import { plural } from "../../../shared/lib/format";
+import { useStepFlow } from "../../../shared/lib/useStepFlow";
 import type { Step } from "../../../shared/ui/Stepper";
+import type { ListingForm } from "../../listing/hooks/useListingForm";
 
-export type FlowStep = "fotos" | "estilo" | "escolha" | "publicar";
+export type PropertyStep = "fotos" | "anuncio" | "decoracoes";
 
-export const FLOW_STEPS: Step<FlowStep>[] = [
+const STEPS: Step<PropertyStep>[] = [
   { id: "fotos", label: "Fotos" },
-  { id: "estilo", label: "Estilo" },
-  { id: "escolha", label: "Escolha" },
-  { id: "publicar", label: "Publicar" },
+  { id: "anuncio", label: "Anúncio" },
+  { id: "decoracoes", label: "Decorações" },
 ];
 
-const ORDER: FlowStep[] = FLOW_STEPS.map((s) => s.id);
+const ALL = new Set<PropertyStep>(["fotos", "anuncio", "decoracoes"]);
 
-// Etapa em que o imóvel "deveria" estar, deduzida só do estado vindo da API.
-function naturalStep(p: PropertyDetailDTO): FlowStep {
-  switch (p.status) {
-    case "draft":
-    case "processing":
-      return "fotos";
-    case "ready":
-      return p.photos.some((ph) => ph.include && ph.generation) ? "escolha" : "fotos";
-    case "generating":
-    case "choosing":
-      return "escolha";
-    case "publishing":
-    case "published":
-    case "publish_failed":
-      return "publicar";
-  }
-}
-
-export function usePropertyFlow(property: PropertyDetailDTO) {
-  const natural = naturalStep(property);
-  const [active, setActive] = useState<FlowStep>(natural);
-
-  // Avança sozinho quando o estado do imóvel muda (ex.: geração terminou), sem puxar o usuário para trás.
-  useEffect(() => {
-    setActive((current) => (ORDER.indexOf(natural) > ORDER.indexOf(current) ? natural : current));
-  }, [natural]);
-
-  const { reachable, completed } = useMemo(() => {
-    const included = property.photos.filter((p) => p.include);
-    const photosDone = included.length > 0 && !property.photos.some((p) => p.status === "classifying");
-    const anyGenerated = included.some((p) => p.generation || p.status === "generating");
-    const canPublish = ["choosing", "publishing", "published", "publish_failed"].includes(property.status);
-
-    const reach = new Set<FlowStep>(["fotos"]);
-    if (photosDone) reach.add("estilo");
-    if (anyGenerated) reach.add("escolha");
-    if (canPublish) reach.add("publicar");
-
-    const done = new Set<FlowStep>();
-    if (photosDone) done.add("fotos");
-    if (property.style && anyGenerated) done.add("estilo");
-    if (canPublish) done.add("escolha");
-    if (property.status === "published") done.add("publicar");
-    return { reachable: reach, completed: done };
+export function usePropertyFlow(property: PropertyDetailDTO, listing: ListingForm) {
+  const completed = useMemo(() => {
+    const done = new Set<PropertyStep>();
+    if (property.photos.some((p) => p.status === "ready" && p.roomConfirmed) && property.status === "ready") done.add("fotos");
+    const d = property.details;
+    if (d.description || d.price || d.areaM2 || d.bedrooms) done.add("anuncio");
+    if (property.publishedCount > 0) done.add("decoracoes");
+    return done;
   }, [property]);
+  const flow = useStepFlow(STEPS, ALL, completed);
 
-  return {
-    steps: FLOW_STEPS,
-    active,
-    reachable,
-    completed,
-    goTo: (step: FlowStep) => {
-      if (reachable.has(step) || step === "estilo") setActive(step);
-    },
-  };
+  const readyPhotos = property.photos.filter((p) => p.status === "ready" && p.roomConfirmed).length;
+  let canNext = false;
+  let onNext = () => {};
+  let hint: string | undefined;
+
+  switch (flow.active) {
+    case "fotos":
+      canNext = readyPhotos > 0 && property.status !== "processing";
+      hint = property.status === "processing" ? "Identificando cômodos…" : readyPhotos ? plural(readyPhotos, "foto pronta", "fotos prontas") : "Envie as fotos para continuar";
+      onNext = () => flow.go("anuncio");
+      break;
+    case "anuncio":
+      canNext = true;
+      hint = listing.dirty ? "Alterações serão salvas ao avançar" : "Tudo opcional";
+      onNext = () => listing.submit(() => flow.go("decoracoes"));
+      break;
+    case "decoracoes":
+      hint = plural(property.stagingCount, "decoração", "decorações");
+      break;
+  }
+
+  return { ...flow, nav: { canPrev: flow.previous !== null, onPrev: () => flow.previous && flow.go(flow.previous), canNext, onNext, nextLoading: listing.saving, hideNext: flow.isLast, hint } };
 }

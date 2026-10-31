@@ -23,7 +23,7 @@ export interface Ai {
   readonly imageModel: string;
   readonly visionModel: string;
   classify(img: Buffer): Promise<Classification>;
-  generate(input: Buffer, prompt: string, size: string, n: number, quality: Quality): Promise<GenerationResult>;
+  generate(input: Buffer, prompt: string, size: string, n: number, quality: Quality, references?: Buffer[]): Promise<GenerationResult>;
   checkStructure(before: Buffer, after: Buffer): Promise<VisionCheck>;
 }
 
@@ -106,10 +106,12 @@ function createOpenAiAi(config: AiConfig): Ai {
     visionModel: config.visionModel,
     classify: (img) => structured("classificacao_comodo", classificationJsonSchema, ClassificationSchema, CLASSIFY_INSTRUCTIONS, [img]),
     checkStructure: (before, after) => structured("trava_estrutura", visionCheckJsonSchema, VisionCheckSchema, CHECK_INSTRUCTIONS, [before, after]),
-    async generate(input, prompt, size, n, quality) {
+    async generate(input, prompt, size, n, quality, references = []) {
+      const room = await toFile(input, "comodo.png", { type: "image/png" });
+      const refs = await Promise.all(references.map(async (r, i) => toFile(await toJpeg(r, 1024, 85), `referencia-${i + 1}.jpg`, { type: "image/jpeg" })));
       const res = await client.images.edit({
         model: config.imageModel,
-        image: await toFile(input, "comodo.png", { type: "image/png" }),
+        image: refs.length ? [room, ...refs] : room,
         prompt,
         n,
         size,

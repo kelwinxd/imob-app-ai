@@ -3,13 +3,13 @@ import type { PropertyDetailDTO } from "@imob/shared";
 import { errorText, isApiError } from "../../../shared/api/http";
 import { plural } from "../../../shared/lib/format";
 import { Alert } from "../../../shared/ui/Alert";
+import { FlowHeader } from "../../../shared/ui/FlowHeader";
 import { PageHeader } from "../../../shared/ui/PageHeader";
 import { FullPageSpinner } from "../../../shared/ui/Spinner";
-import { Stepper } from "../../../shared/ui/Stepper";
-import { ChoiceStep } from "../../generation/containers/ChoiceStep";
-import { StyleStep } from "../../generation/containers/StyleStep";
+import { ListingStep } from "../../listing/containers/ListingStep";
+import { useListingForm } from "../../listing/hooks/useListingForm";
 import { PhotosStep } from "../../photos/containers/PhotosStep";
-import { PublishStep } from "../../publishing/containers/PublishStep";
+import { StagingsSection } from "../../stagings/containers/StagingsSection";
 import { PropertyStatusBadge } from "../components/PropertyStatusBadge";
 import { useProperty } from "../hooks/useProperties";
 import { usePropertyFlow } from "../hooks/usePropertyFlow";
@@ -28,30 +28,35 @@ export function PropertyPage() {
       </>
     );
   }
-  return <PropertyFlow property={property.data} />;
+  // A key reinicia o fluxo (etapa Fotos) sempre que outro imóvel é aberto.
+  return <PropertyFlowView key={property.data.id} property={property.data} />;
 }
 
-function PropertyFlow({ property }: { property: PropertyDetailDTO }) {
-  const flow = usePropertyFlow(property);
+function PropertyFlowView({ property }: { property: PropertyDetailDTO }) {
+  const listing = useListingForm(property);
+  const flow = usePropertyFlow(property, listing);
 
   return (
     <>
-      <PageHeader
+      <FlowHeader
         title={property.title}
         back={{ to: "/", label: "Imóveis" }}
-        subtitle={
-          <span className="flex flex-wrap items-center gap-2">
+        meta={
+          <>
             <PropertyStatusBadge status={property.status} />
             <span>{plural(property.photos.length, "foto", "fotos")}</span>
-          </span>
+          </>
         }
+        nav={flow.nav}
+        steps={flow.steps}
+        active={flow.active}
+        completed={flow.completed}
+        reachable={flow.reachable}
+        onSelect={flow.goTo}
       />
-      <Stepper steps={flow.steps} activeId={flow.active} completed={flow.completed} reachable={flow.reachable} onSelect={flow.goTo} />
-
-      {flow.active === "fotos" && <PhotosStep property={property} onContinue={() => flow.goTo("estilo")} />}
-      {flow.active === "estilo" && <StyleStep property={property} onGenerated={() => flow.goTo("escolha")} />}
-      {flow.active === "escolha" && <ChoiceStep property={property} onContinue={() => flow.goTo("publicar")} onChangeStyle={() => flow.goTo("estilo")} />}
-      {flow.active === "publicar" && <PublishStep property={property} />}
+      {flow.active === "fotos" && <PhotosStep property={property} />}
+      {flow.active === "anuncio" && <ListingStep form={listing} />}
+      {flow.active === "decoracoes" && <StagingsSection property={property} />}
     </>
   );
 }

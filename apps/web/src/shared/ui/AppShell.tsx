@@ -22,7 +22,8 @@ export function AppShell({ userName, onLogout, loggingOut, children }: AppShellP
             <span className="hidden sm:inline">Staging com recibo</span>
           </Link>
           <div className="flex items-center gap-2">
-            <span className="max-w-[40vw] truncate text-sm text-stone-600">{userName}</span>
+            <Link to="/perfil" className="rounded-lg px-2 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-100">Minha marca</Link>
+            <span className="hidden max-w-[30vw] truncate text-sm text-stone-600 sm:inline">{userName}</span>
             <Button variant="ghost" size="sm" onClick={onLogout} loading={loggingOut}>
               Sair
             </Button>

@@ -45,6 +45,10 @@ export async function toJpeg(buf: Buffer, maxEdge?: number, quality = 88): Promi
   return img.jpeg({ quality, mozjpeg: true }).toBuffer();
 }
 
+export async function toLogoPng(buf: Buffer): Promise<Buffer> {
+  return sharp(buf).rotate().resize({ width: 600, height: 300, fit: "inside", withoutEnlargement: true }).png().toBuffer();
+}
+
 const EDGE_WIDTH = 512;
 
 async function edgeMap(buf: Buffer, width: number, height: number): Promise<Float32Array> {

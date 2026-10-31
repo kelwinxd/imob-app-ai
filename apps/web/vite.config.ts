@@ -11,7 +11,7 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       "/api": API,
-      "/i": API,
+      "/i/": API,
     },
   },
 });

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { VariationCheck } from "./checks";
-import { ROOMS, STANDARDS, STYLES, type Room, type Standard, type Style, type Verdict } from "./domain";
+import { FURNITURE_COLOR_IDS, MAX_FURNITURE_COLORS, ROOMS, STANDARDS, STYLES, type Room, type Standard, type Style, type Verdict } from "./domain";
+import type { PropertyDetails } from "./landing";
 
 // ---------- requests ----------
 
@@ -22,13 +23,31 @@ export const CreatePropertyInputSchema = z.object({
 });
 export type CreatePropertyInput = z.infer<typeof CreatePropertyInputSchema>;
 
-export const UpdatePhotoInputSchema = z
-  .object({ roomConfirmed: z.enum(ROOMS).optional(), include: z.boolean().optional() })
-  .refine((v) => v.roomConfirmed !== undefined || v.include !== undefined, "Nada para atualizar");
+export const UpdatePhotoInputSchema = z.object({ roomConfirmed: z.enum(ROOMS) });
 export type UpdatePhotoInput = z.infer<typeof UpdatePhotoInputSchema>;
 
-export const GenerateInputSchema = z.object({ style: z.enum(STYLES), standard: z.enum(STANDARDS) });
-export type GenerateInput = z.infer<typeof GenerateInputSchema>;
+export const CreateStagingInputSchema = z.object({ name: z.string().trim().min(1).max(60).optional() });
+export type CreateStagingInput = z.infer<typeof CreateStagingInputSchema>;
+
+export const UpdateStagingInputSchema = z.object({
+  name: z.string().trim().min(1, "Dê um nome à decoração").max(60).optional(),
+  style: z.enum(STYLES).optional(),
+  standard: z.enum(STANDARDS).optional(),
+  furnitureColors: z.array(z.enum(FURNITURE_COLOR_IDS)).max(MAX_FURNITURE_COLORS, `Escolha até ${MAX_FURNITURE_COLORS} cores`).optional(),
+});
+export type UpdateStagingInput = z.infer<typeof UpdateStagingInputSchema>;
+
+export const UpdateStagingPhotoInputSchema = z.object({ include: z.boolean() });
+export type UpdateStagingPhotoInput = z.infer<typeof UpdateStagingPhotoInputSchema>;
+
+export const MAX_VARIATIONS = 3;
+
+/** Sem photoIds: gera as fotos marcadas que ainda não têm variações com o estilo atual. Com photoIds: gera de novo essas fotos. */
+export const GenerateInputSchema = z.object({
+  variations: z.number().int().min(1).max(MAX_VARIATIONS).default(MAX_VARIATIONS),
+  photoIds: z.array(z.uuid()).max(50).optional(),
+});
+export type GenerateInput = z.input<typeof GenerateInputSchema>;
 
 export const ChooseVariationInputSchema = z.object({ variationId: z.uuid(), confirmReview: z.boolean().default(false) });
 export type ChooseVariationInput = z.input<typeof ChooseVariationInputSchema>;
@@ -41,9 +60,15 @@ export interface UserDTO {
   email: string;
 }
 
-export type PhotoStatus = "classifying" | "ready" | "generating" | "generated" | "failed";
+/** Estado da foto no imóvel (análise do cômodo). */
+export type PhotoStatus = "classifying" | "ready" | "failed";
 
-export type PropertyStatus = "draft" | "processing" | "ready" | "generating" | "choosing" | "publishing" | "published" | "publish_failed";
+/** Estado da foto dentro de uma decoração. */
+export type StagingPhotoStatus = "pending" | "generating" | "generated" | "failed";
+
+export type PropertyStatus = "draft" | "processing" | "ready";
+
+export type StagingStatus = "draft" | "ready" | "generating" | "choosing" | "publishing" | "published" | "publish_failed";
 
 export interface VariationDTO {
   id: string;
@@ -66,22 +91,28 @@ export interface PhotoDTO {
   roomSuggested: Room | null;
   roomConfidence: number | null;
   roomConfirmed: Room | null;
-  include: boolean;
   alerts: string[];
+}
+
+export interface StagingPhotoDTO {
+  photoId: string;
+  position: number;
+  sourceName: string;
+  thumbUrl: string;
+  originalUrl: string;
+  roomConfirmed: Room | null;
+  photoStatus: PhotoStatus;
+  /** A foto já foi analisada e tem cômodo definido. */
+  eligible: boolean;
+  include: boolean;
+  /** Marcada, sem variações ou com variações feitas com outro estilo, padrão, cores, referências ou cômodo. */
+  needsGeneration: boolean;
+  status: StagingPhotoStatus;
+  error: string | null;
   generation: { createdAt: string; model: string; size: string; templateVersion: string } | null;
   variations: VariationDTO[];
   chosenVariationId: string | null;
   finalUrl: string | null;
-}
-
-export interface PropertySummaryDTO {
-  id: string;
-  title: string;
-  status: PropertyStatus;
-  coverUrl: string | null;
-  photoCount: number;
-  createdAt: string;
-  publishedAt: string | null;
 }
 
 export interface PortalDownloadDTO {
@@ -90,11 +121,30 @@ export interface PortalDownloadDTO {
   url: string;
 }
 
-export interface PropertyDetailDTO extends PropertySummaryDTO {
+export interface StagingSummaryDTO {
+  id: string;
+  name: string;
+  status: StagingStatus;
   style: Style | null;
   standard: Standard | null;
+  coverUrl: string | null;
+  publicUrl: string | null;
+  createdAt: string;
+  publishedAt: string | null;
+}
+
+export interface ReferenceImageDTO {
+  id: string;
+  url: string;
+}
+
+export interface StagingDetailDTO extends StagingSummaryDTO {
+  propertyId: string;
+  propertyTitle: string;
+  furnitureColors: string[];
+  references: ReferenceImageDTO[];
   publishError: string | null;
-  photos: PhotoDTO[];
+  photos: StagingPhotoDTO[];
   published: {
     publicUrl: string;
     qrcodeUrl: string;
@@ -102,6 +152,23 @@ export interface PropertyDetailDTO extends PropertySummaryDTO {
     dossierSha256: string;
     portals: PortalDownloadDTO[];
   } | null;
+}
+
+export interface PropertySummaryDTO {
+  id: string;
+  title: string;
+  status: PropertyStatus;
+  coverUrl: string | null;
+  photoCount: number;
+  stagingCount: number;
+  publishedCount: number;
+  createdAt: string;
+}
+
+export interface PropertyDetailDTO extends PropertySummaryDTO {
+  details: PropertyDetails;
+  photos: PhotoDTO[];
+  stagings: StagingSummaryDTO[];
 }
 
 export interface ApiErrorBody {

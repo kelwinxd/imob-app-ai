@@ -3,7 +3,7 @@ import { Badge } from "../../../shared/ui/Badge";
 import { Spinner } from "../../../shared/ui/Spinner";
 import { PROPERTY_STATUS } from "../lib/status";
 
-const SPINNING: ReadonlySet<PropertyStatus> = new Set(["processing", "generating", "publishing"]);
+const SPINNING: ReadonlySet<PropertyStatus> = new Set(["processing"]);
 
 export function PropertyStatusBadge({ status }: { status: PropertyStatus }) {
   const s = PROPERTY_STATUS[status];

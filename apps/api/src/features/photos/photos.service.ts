@@ -3,7 +3,7 @@ import { extname } from "node:path";
 import { and, eq } from "drizzle-orm";
 import { makeWorkingCopy, sha256, toJpeg } from "@imob/core";
 import {
-  ACCEPTED_IMAGE_TYPES, MAX_PHOTOS_PER_PROPERTY, shouldIncludeByDefault,
+  ACCEPTED_IMAGE_TYPES, MAX_PHOTOS_PER_PROPERTY,
   type PropertyDetailDTO, type UpdatePhotoInput,
 } from "@imob/shared";
 import { db } from "../../db/client";
@@ -35,7 +35,6 @@ export async function getOwnedPhoto(userId: string, photoId: string): Promise<{ 
 
 export async function uploadPhotos(userId: string, propertyId: string, files: UploadedFile[]): Promise<PropertyDetailDTO> {
   const property = await getOwnedProperty(userId, propertyId);
-  if (property.publishState === "publishing") throw conflict("O imóvel está sendo publicado. Aguarde terminar.");
   if (files.length === 0) throw badRequest("Selecione pelo menos uma foto.");
 
   const existing = await db.select({ position: photos.position }).from(photos).where(eq(photos.propertyId, propertyId));
@@ -86,23 +85,10 @@ export async function uploadPhotos(userId: string, propertyId: string, files: Up
 
 export async function updatePhoto(userId: string, photoId: string, input: UpdatePhotoInput): Promise<PropertyDetailDTO> {
   const { photo, property } = await getOwnedPhoto(userId, photoId);
-  if (property.publishState === "publishing") throw conflict("O imóvel está sendo publicado. Aguarde terminar.");
-  if (photo.status === "generating") throw conflict("Esta foto está sendo gerada. Aguarde terminar.");
-
-  const patch: Partial<PhotoRow> = {};
-  if (input.include !== undefined) patch.include = input.include;
-  if (input.roomConfirmed !== undefined) {
-    patch.roomConfirmed = input.roomConfirmed;
-    // Se a classificação falhou, o corretor pode informar o cômodo e seguir.
-    if (photo.status === "failed" && !photo.currentGenerationId) {
-      patch.status = "ready";
-      patch.error = null;
-    }
-  }
+  if (photo.status === "classifying") throw conflict("Aguarde terminar a identificação do cômodo.");
+  // Se a classificação falhou, o corretor pode informar o cômodo e seguir.
+  const patch: Partial<PhotoRow> = photo.status === "failed" ? { roomConfirmed: input.roomConfirmed, status: "ready", error: null } : { roomConfirmed: input.roomConfirmed };
   await db.update(photos).set(patch).where(eq(photos.id, photoId));
-  if (property.publishState === "published" || property.publishState === "failed") {
-    await db.update(properties).set({ publishState: "none" }).where(eq(properties.id, property.id));
-  }
   return getPropertyDetail(userId, property.id);
 }
 
@@ -117,7 +103,6 @@ export async function classifyPhotoJob(photoId: string): Promise<void> {
       .set({
         classification: { ...c, model: ai.visionModel, classifiedAt: new Date().toISOString() },
         roomConfirmed: photo.roomConfirmed ?? c.comodo,
-        include: shouldIncludeByDefault(c),
         status: "ready",
         error: null,
       })
