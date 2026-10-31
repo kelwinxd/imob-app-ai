@@ -7,12 +7,18 @@ interface AppShellProps {
   userName: string;
   onLogout: () => void;
   loggingOut?: boolean;
+  mockAi?: boolean;
   children: ReactNode;
 }
 
-export function AppShell({ userName, onLogout, loggingOut, children }: AppShellProps) {
+export function AppShell({ userName, onLogout, loggingOut, mockAi, children }: AppShellProps) {
   return (
     <div className="min-h-dvh">
+      {mockAi && (
+        <div role="status" className="bg-amber-400 px-4 py-1.5 text-center text-xs font-semibold text-amber-950">
+          Modo de teste: a IA está simulada e as imagens geradas são falsas. Rode “npm run dev” para usar a OpenAI.
+        </div>
+      )}
       <header className="sticky top-0 z-20 border-b border-stone-200/80 bg-canvas/90 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-3 px-4">
           <Link to="/" className="flex items-center gap-2 font-semibold text-stone-900">

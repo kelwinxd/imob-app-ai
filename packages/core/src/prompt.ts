@@ -12,6 +12,7 @@ const TemplatesSchema = z.object({
   preserve: z.string(),
   colors: z.string(),
   references: z.string(),
+  layouts: z.array(z.string()).min(1),
   rooms: z.record(z.enum(ROOMS), z.object({ label: z.string(), furniture: z.string() })),
   styles: z.record(z.enum(STYLES), z.string()),
   standards: z.record(z.enum(STANDARDS), z.string()),

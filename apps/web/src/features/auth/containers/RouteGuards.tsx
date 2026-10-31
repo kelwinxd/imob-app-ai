@@ -4,11 +4,13 @@ import { AppShell } from "../../../shared/ui/AppShell";
 import { Button } from "../../../shared/ui/Button";
 import { FullPageSpinner } from "../../../shared/ui/Spinner";
 import { errorText } from "../../../shared/api/http";
+import { useServerInfo } from "../../../shared/api/useServerInfo";
 import { useLogout, useSession } from "../hooks/useSession";
 
 export function ProtectedLayout() {
   const session = useSession();
   const logout = useLogout();
+  const serverInfo = useServerInfo();
   const location = useLocation();
 
   if (session.isPending) return <FullPageSpinner />;
@@ -28,7 +30,7 @@ export function ProtectedLayout() {
   if (!session.data) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
 
   return (
-    <AppShell userName={session.data.name} onLogout={() => logout.mutate()} loggingOut={logout.isPending}>
+    <AppShell userName={session.data.name} onLogout={() => logout.mutate()} loggingOut={logout.isPending} mockAi={serverInfo.data?.aiMock}>
       <Outlet />
     </AppShell>
   );

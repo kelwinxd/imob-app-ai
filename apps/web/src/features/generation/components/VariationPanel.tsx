@@ -7,7 +7,8 @@ import { VERDICT_INFO } from "../lib/verdict";
 import { CheckDetails } from "./CheckDetails";
 import { VerdictBadge } from "./VerdictBadge";
 
-export type Focus = "original" | string;
+/** Id da variação em destaque. */
+export type Focus = string;
 
 interface VariationPanelProps {
   photo: StagingPhotoDTO;
@@ -27,23 +28,13 @@ const dot = (v: VariationDTO) => (v.verdict === "aprovado" ? "bg-emerald-500" : 
 
 export function VariationPanel(props: VariationPanelProps) {
   const { photo, focus, onFocus, pendingReviewVariationId, busy, locked, variationCount, onChoose, onConfirmReview, onCancelReview, onRegenerate } = props;
-  const focused = focus === "original" ? null : photo.variations.find((v) => v.id === focus) ?? null;
+  const focused = photo.variations.find((v) => v.id === focus) ?? null;
   const generating = photo.status === "generating";
 
   return (
     <div className="flex flex-col gap-3">
       {photo.variations.length > 0 && (
-        <div className="grid grid-cols-4 gap-1.5">
-          <button
-            type="button"
-            aria-label="Ver foto original"
-            aria-pressed={focus === "original"}
-            onClick={() => onFocus("original")}
-            className={cn("flex flex-col gap-1 rounded-lg p-1 ring-1 transition", focus === "original" ? "ring-2 ring-stone-800" : "ring-stone-200 hover:ring-stone-400")}
-          >
-            <img src={photo.thumbUrl} alt="" className="aspect-[4/3] w-full rounded object-cover" />
-            <span className="text-[11px] text-stone-600">Original</span>
-          </button>
+        <div className="grid grid-cols-3 gap-1.5">
           {photo.variations.map((v) => (
             <button
               key={v.id}

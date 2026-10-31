@@ -27,7 +27,12 @@ export function ChoiceStep({ staging, onEditStyle }: { staging: StagingDetailDTO
     <section className="grid gap-5 lg:grid-cols-10" aria-label="Escolha das variações">
       <div className="order-1 lg:order-2 lg:col-span-7">
         <div className="lg:sticky lg:top-20">
-          <ImageStage src={state.stage.src} label={state.stage.label} overlay={state.stage.overlay} />
+          <ImageStage
+            src={state.stage.src}
+            label={state.stage.label}
+            overlay={state.stage.overlay}
+            compare={state.stage.canCompare ? { active: state.comparing, onChange: state.setComparing } : null}
+          />
         </div>
       </div>
 

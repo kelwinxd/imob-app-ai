@@ -1,6 +1,7 @@
 import cookieParser from "cookie-parser";
 import express from "express";
 import helmet from "helmet";
+import { env } from "./env";
 import { requireAuth } from "./features/auth/auth.middleware";
 import { authRouter } from "./features/auth/auth.routes";
 import { generationRouter } from "./features/generation/generation.routes";
@@ -21,7 +22,7 @@ export function createApp() {
   app.use(cookieParser());
 
   app.get("/api/health", (_req, res) => {
-    res.json({ ok: true });
+    res.json({ ok: true, aiMock: env.AI_MOCK });
   });
   app.use("/api/auth", authRouter);
   app.use("/api/profile", requireAuth, profileRouter);

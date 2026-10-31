@@ -1,5 +1,10 @@
 {
-  "version": "v2",
+  "version": "v3",
+  "layouts": [
+    "Disposição dos móveis: encoste os móveis principais nas paredes e deixe a circulação central livre.",
+    "Disposição dos móveis: agrupe os móveis em torno de um tapete no centro do cômodo, formando um ambiente integrado.",
+    "Disposição dos móveis: organize os móveis valorizando a janela e a entrada de luz natural, sem bloqueá-la."
+  ],
   "colors": "Cores dos móveis e tecidos: use predominantemente {cores}, combinando com o estilo.",
   "references": "A primeira imagem é o cômodo a ser decorado. As demais imagens são referências de móveis enviadas pelo corretor: use móveis com forma, cor e material parecidos com os das referências quando fizerem sentido para este cômodo, ajustando a escala ao espaço. Não copie o fundo nem outros elementos das imagens de referência.",
   "base": "Edite esta foto real de um cômodo vazio para fazer um staging virtual: adicione apenas móveis e objetos de decoração soltos, de forma fotorrealista e coerente com a luz e a perspectiva da foto.",

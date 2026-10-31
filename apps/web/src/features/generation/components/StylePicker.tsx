@@ -2,13 +2,13 @@ import { STANDARD_INFO, STANDARDS, STYLE_INFO, STYLES, type Standard, type Style
 import { cn } from "../../../shared/lib/cn";
 import { CheckIcon } from "../../../shared/ui/icons";
 
-export const styleImageOf = (style: Style) => `/styles/${style}.jpg`;
+export const styleImageOf = (style: Style) => `/styles/${style}.jpg?v=2`;
 
 export function StylePicker({ value, onChange }: { value: Style | null; onChange: (style: Style) => void }) {
   return (
     <fieldset>
       <legend className="mb-1 text-sm font-semibold text-stone-900">Estilo da decoração</legend>
-      <p className="mb-3 text-xs text-stone-600">Exemplos: a mesma sala decorada em cada estilo.</p>
+      <p className="mb-3 text-xs text-stone-600">Cada imagem mostra o espírito do estilo. A IA adapta ao seu cômodo e ao padrão escolhido.</p>
       <div role="radiogroup" className="grid grid-cols-2 gap-3 md:grid-cols-3">
         {STYLES.map((s) => {
           const selected = value === s;

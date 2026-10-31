@@ -73,10 +73,16 @@ export async function runGeneration(req: GenerationRequest): Promise<GenerationO
     hasReferences: references.length > 0,
   });
   const createdAt = new Date().toISOString();
-  const result = await req.ai.generate(input, prompt, sizeStr, req.variations ?? 3, req.quality, references);
+  const count = req.variations ?? 3;
+  // Uma chamada por variação, cada uma com uma disposição de móveis diferente, para as opções não saírem parecidas.
+  const layouts = count > 1 ? Array.from({ length: count }, (_, i) => req.templates.layouts[i % req.templates.layouts.length]) : [];
+  const prompts = count > 1 ? layouts.map((l) => `${prompt}\n${l}`) : [prompt];
+  const results = await Promise.all(prompts.map((p) => req.ai.generate(input, p, sizeStr, 1, req.quality, references)));
+  const images = results.flatMap((r) => r.images);
+  const recordedPrompt = layouts.length ? [prompt, "", ...layouts.map((l, i) => `Variação ${i + 1}: ${l}`)].join("\n") : prompt;
 
   const variations = await Promise.all(
-    result.images.map(async (raw, i) => {
+    images.map(async (raw, i) => {
       const image = await fitExactly(raw, size.width, size.height);
       return { index: i + 1, image, sha256: sha256(image), check: await checkVariation(req.ai, input, image, req.edgeThreshold) };
     }),
@@ -88,12 +94,24 @@ export async function runGeneration(req: GenerationRequest): Promise<GenerationO
     quality: req.quality,
     size: sizeStr,
     templateVersion: req.templates.version,
-    prompt,
+    prompt: recordedPrompt,
     input,
     inputSha256: sha256(input),
-    usage: result.usage,
+    usage: sumUsage(results.map((r) => r.usage)),
     variations,
   };
+}
+
+function sumUsage(usages: unknown[]): unknown {
+  let input = 0, output = 0, counted = false;
+  for (const u of usages as ({ input_tokens?: number; output_tokens?: number } | null)[]) {
+    if (typeof u?.input_tokens === "number") {
+      input += u.input_tokens;
+      output += u.output_tokens ?? 0;
+      counted = true;
+    }
+  }
+  return counted ? { input_tokens: input, output_tokens: output, calls: usages.length } : usages[0] ?? null;
 }
 
 export const defaultChoice = (variations: { index: number; check?: VariationCheck }[]) =>
