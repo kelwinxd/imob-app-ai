@@ -6,7 +6,6 @@ import { Card } from "../../../shared/ui/Card";
 import { DownloadIcon, SparklesIcon } from "../../../shared/ui/icons";
 import { Lightbox } from "../../../shared/ui/Lightbox";
 import { ChoicePhotoList } from "../components/ChoicePhotoList";
-import { GenerationProgress } from "../components/GenerationProgress";
 import { ImageStage } from "../components/ImageStage";
 import { StyleSummary } from "../components/StyleSummary";
 import { VariationCountPicker } from "../components/VariationCountPicker";
@@ -37,11 +36,11 @@ export function ChoiceStep({ staging, onEditStyle }: { staging: StagingDetailDTO
             src={stage.src}
             label={stage.label}
             overlay={stage.overlay}
+            progress={progress}
             compare={stage.canCompare ? { active: state.comparing, onChange: state.setComparing } : null}
             onExpand={full ? () => state.setExpanded(true) : undefined}
             download={full?.download ?? null}
           />
-          {progress.active && <GenerationProgress pct={progress.pct} done={progress.done} total={progress.total} remainingSec={progress.remainingSec} />}
         </div>
       </div>
 
@@ -103,6 +102,7 @@ export function ChoiceStep({ staging, onEditStyle }: { staging: StagingDetailDTO
               onConfirmReview={choice.confirmReview}
               onCancelReview={choice.cancelReview}
               onRegenerate={() => generate.generatePhoto(selected.photoId, state.variationCount)}
+              onEditStyle={onEditStyle}
             />
             {choice.error && <Alert tone="danger" className="mt-3">{choice.error}</Alert>}
           </Card>

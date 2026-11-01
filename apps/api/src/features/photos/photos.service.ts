@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { extname } from "node:path";
 import { and, eq } from "drizzle-orm";
-import { makeWorkingCopy, sha256, toJpeg } from "@imob/core";
+import { describeAiError, makeWorkingCopy, sha256, toJpeg } from "@imob/core";
 import {
   ACCEPTED_IMAGE_TYPES, MAX_PHOTOS_PER_PROPERTY,
   type PropertyDetailDTO, type UpdatePhotoInput,
@@ -9,7 +9,7 @@ import {
 import { db } from "../../db/client";
 import { photos, properties, type PhotoRow, type PropertyRow } from "../../db/schema";
 import { getAi } from "../../shared/ai";
-import { badRequest, conflict, errorMessage, notFound } from "../../shared/http";
+import { badRequest, conflict, notFound } from "../../shared/http";
 import { enqueue, QUEUES } from "../../shared/queue";
 import { keys, storage } from "../../shared/storage";
 import { appendEvent } from "../audit/audit.service";
@@ -110,7 +110,7 @@ export async function classifyPhotoJob(photoId: string): Promise<void> {
     await appendEvent(photo.propertyId, "classificar", { foto: photoId, ...c });
   } catch (err) {
     console.error(`[classificar ${photoId}]`, err);
-    await db.update(photos).set({ status: "failed", error: `Não foi possível identificar o cômodo: ${errorMessage(err)}` }).where(eq(photos.id, photoId));
+    await db.update(photos).set({ status: "failed", error: `Não foi possível identificar o cômodo. ${describeAiError(err).message}` }).where(eq(photos.id, photoId));
   }
 }
 

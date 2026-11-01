@@ -1,12 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { and, eq } from "drizzle-orm";
-import { defaultChoice, runGeneration, toJpeg } from "@imob/core";
+import { defaultChoice, describeAiError, runGeneration, toJpeg } from "@imob/core";
 import { GenerateInputSchema, type ChooseVariationInput, type GenerateInput, type StagingDetailDTO } from "@imob/shared";
 import { db } from "../../db/client";
 import { generations, photos, stagingPhotos, stagingReferences, stagings, variations } from "../../db/schema";
 import { env } from "../../env";
 import { getAi, getTemplates } from "../../shared/ai";
-import { badRequest, conflict, errorMessage, notFound, unprocessable } from "../../shared/http";
+import { badRequest, conflict, notFound, unprocessable } from "../../shared/http";
 import { enqueue, QUEUES } from "../../shared/queue";
 import { keys, storage } from "../../shared/storage";
 import { appendEvent } from "../audit/audit.service";
@@ -103,6 +103,9 @@ export async function generatePhotoJob({ stagingId, photoId, variations: count }
       });
     }
     const chosen = varRows.find((v) => v.index === defaultChoice(outcome.variations));
+    const pf = outcome.partialFailure;
+    // Geração parcial: a foto fica pronta, mas o aviso explica por que vieram menos variações.
+    const partialWarning = pf ? `${pf.failed} de ${pf.requested} variações não foram geradas. ${pf.info.message}` : null;
     const options = {
       furnitureColors: staging.furnitureColors,
       referenceSha256: sortedRefs.map((r) => r.sha256),
@@ -118,7 +121,7 @@ export async function generatePhotoJob({ stagingId, photoId, variations: count }
       await tx.insert(variations).values(varRows);
       await tx
         .update(stagingPhotos)
-        .set({ status: "generated", error: null, currentGenerationId: generationId, chosenVariationId: chosen?.id ?? null, reviewConfirmed: false })
+        .set({ status: "generated", error: partialWarning, currentGenerationId: generationId, chosenVariationId: chosen?.id ?? null, reviewConfirmed: false })
         .where(and(eq(stagingPhotos.stagingId, stagingId), eq(stagingPhotos.photoId, photoId)));
     });
     await appendEvent(staging.propertyId, "gerar", {
@@ -129,6 +132,8 @@ export async function generatePhotoJob({ stagingId, photoId, variations: count }
     });
   } catch (err) {
     console.error(`[gerar ${stagingId}/${photoId}]`, err);
-    await fail(`A geração falhou: ${errorMessage(err)}`);
+    const info = describeAiError(err);
+    if (info.requestId) console.error(`[gerar ${stagingId}/${photoId}] request id da OpenAI: ${info.requestId}`);
+    await fail(info.message);
   }
 }

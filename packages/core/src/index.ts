@@ -1,4 +1,5 @@
 export * from "./ai";
+export * from "./ai-errors";
 export * from "./audit-chain";
 export * from "./dossier";
 export * from "./generation";

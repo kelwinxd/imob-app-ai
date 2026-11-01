@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { StagingPhotoDTO } from "@imob/shared";
+import type { StageProgress } from "../components/ImageStage";
 
 // A OpenAI não informa progresso; a barra é uma estimativa por tempo, corrigida pelas fotos que já terminaram.
 const SECONDS_PER_PHOTO = 45;
@@ -29,7 +30,7 @@ export function useGenerationProgress(photos: StagingPhotoDTO[]) {
   }, [key]);
 
   const b = batch.current;
-  if (!b || generating.length === 0) return { active: false, pct: 0, done: 0, total: 0, remainingSec: 0 };
+  if (!b || generating.length === 0) return null;
 
   const total = b.photoIds.size;
   const done = total - generating.length;
@@ -37,11 +38,11 @@ export function useGenerationProgress(photos: StagingPhotoDTO[]) {
   const elapsed = (now - b.startedAt) / 1000;
   const byTime = Math.min(0.95, elapsed / expected);
   const byDone = done / total;
-  return {
-    active: true,
+  const remaining = Math.max(0, Math.round(expected - elapsed));
+  const progress: StageProgress = {
     pct: Math.round(Math.max(byTime, byDone) * 100),
-    done,
-    total,
-    remainingSec: Math.max(0, Math.round(expected - elapsed)),
+    title: total > 1 ? `${done} de ${total} fotos prontas` : "Gerando a foto",
+    time: remaining > 5 ? `cerca de ${remaining < 60 ? `${remaining} s` : `${Math.ceil(remaining / 60)} min`}` : "finalizando…",
   };
+  return progress;
 }

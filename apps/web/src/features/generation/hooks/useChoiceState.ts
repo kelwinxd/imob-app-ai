@@ -34,7 +34,7 @@ export function useChoiceState(staging: StagingDetailDTO) {
       return {
         src: focusedVariation?.previewUrl ?? selected.originalUrl,
         label: room,
-        overlay: { title: "Decorando e conferindo a estrutura…", subtitle: "Acompanhe o progresso logo abaixo", spinning: true },
+        overlay: { title: "Decorando a foto…", subtitle: "Cada variação passa pela trava de estrutura", spinning: true },
         canCompare: false,
         full: null,
       };

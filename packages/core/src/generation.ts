@@ -1,6 +1,7 @@
 import sharp from "sharp";
 import type { FurnitureColorId, Quality, Room, Standard, Style, VariationCheck, Verdict } from "@imob/shared";
 import type { Ai } from "./ai";
+import { describeAiError, type AiErrorInfo } from "./ai-errors";
 import { fitExactly, matchingSize, sha256, structureEdgeScore } from "./imaging";
 import { buildPrompt, type Templates } from "./prompt";
 
@@ -61,6 +62,8 @@ export interface GenerationOutcome {
   inputSha256: string;
   usage: unknown;
   variations: GeneratedVariation[];
+  /** Variações pedidas que falharam enquanto outras deram certo. */
+  partialFailure: { failed: number; requested: number; info: AiErrorInfo } | null;
 }
 
 export async function runGeneration(req: GenerationRequest): Promise<GenerationOutcome> {
@@ -79,7 +82,11 @@ export async function runGeneration(req: GenerationRequest): Promise<GenerationO
   // Uma chamada por variação, cada uma com uma disposição de móveis diferente, para as opções não saírem parecidas.
   const layouts = count > 1 ? Array.from({ length: count }, (_, i) => req.templates.layouts[i % req.templates.layouts.length]) : [];
   const prompts = count > 1 ? layouts.map((l) => `${prompt}\n${l}`) : [prompt];
-  const results = await Promise.all(prompts.map((p) => req.ai.generate(input, p, sizeStr, 1, req.quality, references)));
+  // Se só parte das chamadas falhar (ex.: filtro de segurança em uma disposição), as outras variações são aproveitadas.
+  const settled = await Promise.allSettled(prompts.map((p) => req.ai.generate(input, p, sizeStr, 1, req.quality, references)));
+  const results = settled.flatMap((s) => (s.status === "fulfilled" ? [s.value] : []));
+  const failures = settled.flatMap((s) => (s.status === "rejected" ? [s.reason] : []));
+  if (results.length === 0) throw failures[0];
   const images = results.flatMap((r) => r.images);
   const recordedPrompt = layouts.length ? [prompt, "", ...layouts.map((l, i) => `Variação ${i + 1}: ${l}`)].join("\n") : prompt;
 
@@ -101,6 +108,7 @@ export async function runGeneration(req: GenerationRequest): Promise<GenerationO
     inputSha256: sha256(input),
     usage: sumUsage(results.map((r) => r.usage)),
     variations,
+    partialFailure: failures.length ? { failed: failures.length, requested: prompts.length, info: describeAiError(failures[0]) } : null,
   };
 }
 

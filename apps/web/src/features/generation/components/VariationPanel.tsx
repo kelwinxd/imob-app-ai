@@ -22,12 +22,13 @@ interface VariationPanelProps {
   onConfirmReview: () => void;
   onCancelReview: () => void;
   onRegenerate: () => void;
+  onEditStyle: () => void;
 }
 
 const dot = (v: VariationDTO) => (v.verdict === "aprovado" ? "bg-emerald-500" : v.verdict === "revisar" ? "bg-amber-500" : "bg-red-500");
 
 export function VariationPanel(props: VariationPanelProps) {
-  const { photo, focus, onFocus, pendingReviewVariationId, busy, locked, variationCount, onChoose, onConfirmReview, onCancelReview, onRegenerate } = props;
+  const { photo, focus, onFocus, pendingReviewVariationId, busy, locked, variationCount, onChoose, onConfirmReview, onCancelReview, onRegenerate, onEditStyle } = props;
   const focused = photo.variations.find((v) => v.id === focus) ?? null;
   const generating = photo.status === "generating";
 
@@ -62,7 +63,16 @@ export function VariationPanel(props: VariationPanelProps) {
         </div>
       )}
 
-      {photo.status === "failed" && <Alert tone="danger">{photo.error ?? "A geração falhou."}</Alert>}
+      {photo.status === "failed" && (
+        <Alert
+          tone="danger"
+          title="Esta foto não foi gerada"
+          action={<Button size="sm" variant="secondary" onClick={onEditStyle}>Ajustar estilo ou pedido</Button>}
+        >
+          {photo.error ?? "A geração falhou. Tente gerar de novo."}
+        </Alert>
+      )}
+      {photo.status === "generated" && photo.error && <Alert tone="warning">{photo.error}</Alert>}
 
       {focused && (
         <div className="flex flex-col gap-2.5">
