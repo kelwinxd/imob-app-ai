@@ -64,7 +64,7 @@ export function SettingsMenu({ label, items }: SettingsMenuProps) {
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className={cn("inline-flex h-9 w-9 items-center justify-center rounded-lg text-stone-500 transition hover:bg-stone-100 hover:text-stone-900", open && "bg-stone-100 text-stone-900")}
+        className={cn("inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white text-stone-700 ring-1 ring-inset ring-stone-300 transition-colors hover:bg-stone-50 hover:text-stone-900 active:bg-stone-100", open && "bg-stone-100 text-stone-900")}
       >
         <GearIcon size={20} />
       </button>
