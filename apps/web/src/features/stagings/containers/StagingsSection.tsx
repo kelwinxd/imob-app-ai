@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { useNavigate } from "react-router";
-import type { PropertyDetailDTO } from "@imob/shared";
+import type { PropertyDetailDTO, StagingSummaryDTO } from "@imob/shared";
 import { Alert } from "../../../shared/ui/Alert";
 import { Button } from "../../../shared/ui/Button";
 import { EmptyState } from "../../../shared/ui/EmptyState";
 import { PlusIcon, SparklesIcon } from "../../../shared/ui/icons";
+import { DeleteStagingDialog } from "../components/DeleteStagingDialog";
 import { StagingCard } from "../components/StagingCard";
 import { useCreateStaging, useDeleteStaging } from "../hooks/useStagings";
 
@@ -13,6 +15,7 @@ export function StagingsSection({ property }: { property: PropertyDetailDTO }) {
   const navigate = useNavigate();
   const create = useCreateStaging(property.id);
   const remove = useDeleteStaging(property.id);
+  const [toDelete, setToDelete] = useState<StagingSummaryDTO | null>(null);
   const ready = property.photos.some((p) => p.status === "ready" && p.roomConfirmed);
 
   const newButton = (
@@ -38,7 +41,6 @@ export function StagingsSection({ property }: { property: PropertyDetailDTO }) {
 
       {!ready && <Alert tone="info">Envie as fotos e confirme os cômodos na etapa Fotos para criar uma decoração.</Alert>}
       {create.error && <Alert tone="danger">{create.error}</Alert>}
-      {remove.error && <Alert tone="danger">{remove.error}</Alert>}
 
       {property.stagings.length === 0 ? (
         <EmptyState
@@ -54,12 +56,21 @@ export function StagingsSection({ property }: { property: PropertyDetailDTO }) {
               key={s.id}
               staging={s}
               to={stagingPath(property.id, s.id)}
-              deleting={remove.removingId === s.id}
-              onDelete={() => remove.remove(s.id)}
+              onDelete={() => {
+                remove.reset();
+                setToDelete(s);
+              }}
             />
           ))}
         </div>
       )}
+      <DeleteStagingDialog
+        staging={toDelete}
+        deleting={remove.removing}
+        error={remove.error}
+        onCancel={() => setToDelete(null)}
+        onConfirm={() => toDelete && remove.remove(toDelete.id, () => setToDelete(null))}
+      />
     </section>
   );
 }

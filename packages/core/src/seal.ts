@@ -13,7 +13,7 @@ export function sealText(items: string[], shortUrl: string): string {
   const uniq = [...new Set(items.map((s) => s.trim().toLowerCase()).filter(Boolean))];
   const list = uniq.length > 4 ? `${uniq.slice(0, 4).join(", ")} e outros` : joinPt(uniq);
   const what = uniq.length ? `Móveis ilustrativos (IA): ${list}` : "Decoração ilustrativa (IA)";
-  return `${what} · Foto original: ${shortUrl}`;
+  return `${what} · ${shortUrl}`;
 }
 
 const CHAR_WIDTH = 0.53;

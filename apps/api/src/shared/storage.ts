@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { dirname, isAbsolute, relative, resolve } from "node:path";
 import { env } from "../env";
@@ -7,6 +7,8 @@ export interface Storage {
   put(key: string, data: Buffer): Promise<void>;
   read(key: string): Promise<Buffer>;
   exists(key: string): boolean;
+  /** Apaga tudo o que está sob o prefixo (uma "pasta"). */
+  removePrefix(prefix: string): Promise<void>;
 }
 
 // Implementação em disco para desenvolvimento; a interface é a mesma que um storage S3/R2 vai implementar.
@@ -33,12 +35,18 @@ class LocalStorage implements Storage {
   exists(key: string) {
     return existsSync(this.pathOf(key));
   }
+
+  async removePrefix(prefix: string) {
+    await rm(this.pathOf(prefix), { recursive: true, force: true });
+  }
 }
 
 export const storage: Storage = new LocalStorage(env.STORAGE_DIR);
 
 export const keys = {
+  propertyDir: (propertyId: string) => `properties/${propertyId}`,
   photoDir: (propertyId: string, photoId: string) => `properties/${propertyId}/photos/${photoId}`,
+  generationDir: (propertyId: string, photoId: string, generationId: string) => `properties/${propertyId}/photos/${photoId}/generations/${generationId}`,
   original: (propertyId: string, photoId: string, ext: string) => `${keys.photoDir(propertyId, photoId)}/original${ext}`,
   working: (propertyId: string, photoId: string) => `${keys.photoDir(propertyId, photoId)}/working.png`,
   view: (propertyId: string, photoId: string) => `${keys.photoDir(propertyId, photoId)}/view.jpg`,

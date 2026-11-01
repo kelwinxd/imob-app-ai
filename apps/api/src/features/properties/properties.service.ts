@@ -2,7 +2,8 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import type { CreatePropertyInput, PropertyDetailDTO, PropertySummaryDTO, UpdatePropertyInput } from "@imob/shared";
 import { db } from "../../db/client";
 import { photos, properties, type PropertyRow } from "../../db/schema";
-import { notFound } from "../../shared/http";
+import { conflict, notFound } from "../../shared/http";
+import { keys, storage } from "../../shared/storage";
 import { stagingSummariesFor } from "../stagings/stagings.model";
 import { toPropertyDetailDTO, toPropertySummaryDTO } from "./properties.mapper";
 
@@ -32,6 +33,18 @@ export async function updateProperty(userId: string, propertyId: string, input: 
   const patch = Object.fromEntries(Object.entries(input).filter(([, v]) => v !== undefined));
   if (Object.keys(patch).length) await db.update(properties).set(patch).where(eq(properties.id, propertyId));
   return getPropertyDetail(userId, propertyId);
+}
+
+// Exclusão definitiva: banco (em cascata) e todos os arquivos do imóvel, inclusive originais e dossiês.
+export async function deleteProperty(userId: string, propertyId: string): Promise<void> {
+  const property = await getOwnedProperty(userId, propertyId);
+  const photoRows = await db.select().from(photos).where(eq(photos.propertyId, propertyId));
+  const summaries = (await stagingSummariesFor([propertyId], photoRows)).get(propertyId) ?? [];
+  if (summaries.some((s) => s.status === "generating" || s.status === "publishing")) {
+    throw conflict("Há uma decoração gerando ou publicando. Aguarde terminar para excluir o imóvel.");
+  }
+  await db.delete(properties).where(eq(properties.id, property.id));
+  await storage.removePrefix(keys.propertyDir(property.id));
 }
 
 export async function loadPropertyDetail(property: PropertyRow): Promise<PropertyDetailDTO> {

@@ -10,14 +10,16 @@ export interface FlowNav {
   onNext: () => void;
   nextLoading?: boolean;
   hideNext?: boolean;
-  hint?: string;
+  /** Troca o "Próximo" por uma ação, como "Publicar" na última etapa. */
+  nextLabel?: string;
+  nextIcon?: ReactNode;
 }
 
 interface FlowHeaderProps<T extends string> {
   title: string;
   back: { to: string; label: string };
-  meta: ReactNode;
   nav: FlowNav;
+  settings?: ReactNode;
   steps: Step<T>[];
   active: T;
   completed: ReadonlySet<T>;
@@ -25,25 +27,24 @@ interface FlowHeaderProps<T extends string> {
   onSelect: (step: T) => void;
 }
 
-export function FlowHeader<T extends string>({ title, back, meta, nav, steps, active, completed, reachable, onSelect }: FlowHeaderProps<T>) {
+export function FlowHeader<T extends string>({ title, back, nav, settings, steps, active, completed, reachable, onSelect }: FlowHeaderProps<T>) {
   return (
     <>
       <PageHeader
         title={title}
         back={back}
-        subtitle={
-          <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            {meta}
-            {nav.hint && (
-              <span className="text-stone-500">
-                <span className="hidden sm:inline">· </span>
-                {nav.hint}
-              </span>
-            )}
-          </span>
-        }
+        leading={settings}
         actions={
-          <StepNav onPrev={nav.onPrev} onNext={nav.onNext} prevDisabled={!nav.canPrev} nextDisabled={!nav.canNext} nextLoading={nav.nextLoading} hideNext={nav.hideNext} />
+          <StepNav
+            onPrev={nav.onPrev}
+            onNext={nav.onNext}
+            prevDisabled={!nav.canPrev}
+            nextDisabled={!nav.canNext}
+            nextLoading={nav.nextLoading}
+            hideNext={nav.hideNext}
+            nextLabel={nav.nextLabel}
+            nextIcon={nav.nextIcon}
+          />
         }
       />
       <Stepper steps={steps} activeId={active} completed={completed} reachable={reachable} onSelect={onSelect} />

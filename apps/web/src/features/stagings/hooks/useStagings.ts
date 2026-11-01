@@ -36,7 +36,13 @@ export function useCreateStaging(propertyId: string) {
 export function useUpdateStaging(stagingId: string) {
   const apply = useApplyStagingDetail();
   const mutation = useMutation({ mutationFn: (input: UpdateStagingInput) => stagingsApi.update(stagingId, input), onSuccess: apply });
-  return { update: mutation.mutate, updating: mutation.isPending, error: mutation.error ? errorText(mutation.error) : null };
+  return {
+    update: mutation.mutate,
+    updating: mutation.isPending,
+    /** O que está sendo salvo agora, para a tela já mostrar a escolha antes da resposta. */
+    pending: mutation.isPending ? mutation.variables : undefined,
+    error: mutation.error ? errorText(mutation.error) : null,
+  };
 }
 
 export function useDeleteStaging(propertyId: string) {
@@ -49,8 +55,9 @@ export function useDeleteStaging(propertyId: string) {
     },
   });
   return {
-    remove: (id: string) => mutation.mutate(id),
-    removingId: mutation.isPending ? mutation.variables : undefined,
+    remove: (id: string, onSuccess?: () => void) => mutation.mutate(id, { onSuccess }),
+    removing: mutation.isPending,
+    reset: mutation.reset,
     error: mutation.error ? errorText(mutation.error) : null,
   };
 }

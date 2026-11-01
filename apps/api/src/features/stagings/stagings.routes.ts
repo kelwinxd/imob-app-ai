@@ -4,7 +4,8 @@ import { CreateStagingInputSchema, MAX_PHOTO_BYTES, MAX_REFERENCE_IMAGES, Update
 import { parseId, parseInput, sendStored } from "../../shared/http";
 import { storage } from "../../shared/storage";
 import { currentUser } from "../auth/auth.middleware";
-import { getStagingDetail } from "./stagings.model";
+import { renderStagingPage } from "../public-page/public-page.service";
+import { finalUrlOf, getOwnedStaging, getStagingDetail } from "./stagings.model";
 import {
   addReferences, createStaging, deleteStaging, getReference, getStagingPhotoFinal, removeReference, updateStaging, updateStagingPhoto,
 } from "./stagings.service";
@@ -19,6 +20,24 @@ stagingsRouter.post("/properties/:id/stagings", async (req, res) => {
 
 stagingsRouter.get("/stagings/:id", async (req, res) => {
   res.json(await getStagingDetail(currentUser(req).id, parseId(req.params.id)));
+});
+
+// Prévia da página com as variações escolhidas, mesmo antes de publicar.
+stagingsRouter.get("/stagings/:id/preview", async (req, res) => {
+  const { staging, property } = await getOwnedStaging(currentUser(req).id, parseId(req.params.id));
+  const html = await renderStagingPage({
+    staging,
+    property,
+    preview: true,
+    photoSrc: (photo, row) => {
+      if (!row.include || !row.chosenVariationId) return null;
+      if (row.final && row.final.variationId === row.chosenVariationId) return finalUrlOf(staging.id, photo.id, row.final.sha256);
+      return `/api/variations/${row.chosenVariationId}/preview`;
+    },
+    logoSrc: (logoKey) => `/api/profile/logo?v=${logoKey.slice(-16, -4)}`,
+  });
+  res.setHeader("Cache-Control", "no-store");
+  res.type("html").send(html);
 });
 
 stagingsRouter.patch("/stagings/:id", async (req, res) => {

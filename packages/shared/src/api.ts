@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { VariationCheck } from "./checks";
 import { FURNITURE_COLOR_IDS, MAX_FURNITURE_COLORS, ROOMS, STANDARDS, STYLES, type Room, type Standard, type Style, type Verdict } from "./domain";
 import { instructionRuleViolation, MAX_INSTRUCTION_LENGTH } from "./instructions";
-import { PAGE_COMPARE_MODES, PAGE_THEMES, type PageCompareMode, type PageTheme, type PropertyDetails } from "./landing";
+import { PAGE_THEMES, type PageTheme, type PropertyDetails } from "./landing";
 
 // ---------- requests ----------
 
@@ -45,7 +45,6 @@ export const UpdateStagingInputSchema = z.object({
     })
     .optional(),
   pageTheme: z.enum(PAGE_THEMES).optional(),
-  pageCompare: z.enum(PAGE_COMPARE_MODES).optional(),
 });
 export type UpdateStagingInput = z.infer<typeof UpdateStagingInputSchema>;
 
@@ -156,7 +155,6 @@ export interface StagingDetailDTO extends StagingSummaryDTO {
   furnitureColors: string[];
   customInstructions: string;
   pageTheme: PageTheme;
-  pageCompare: PageCompareMode;
   references: ReferenceImageDTO[];
   publishError: string | null;
   photos: StagingPhotoDTO[];

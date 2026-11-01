@@ -16,7 +16,7 @@ export function PublishedResult({ published, copied, onCopy }: PublishedResultPr
     <div className="grid gap-4 lg:grid-cols-[1fr_auto]">
       <Card className="flex flex-col gap-4 p-4 sm:p-5">
         <div>
-          <p className="text-sm font-semibold">Página pública antes/depois</p>
+          <p className="text-sm font-semibold">Página pública do imóvel</p>
           <p className="mt-0.5 text-xs text-stone-600">Coloque este link no anúncio. É o mesmo que aparece no selo das fotos.</p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">

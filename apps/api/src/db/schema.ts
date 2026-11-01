@@ -1,6 +1,6 @@
 import { bigint, bigserial, boolean, index, integer, jsonb, pgTable, primaryKey, real, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import type {
-  Classification, FurnitureColorId, PageCompareMode, PageTheme, Purpose, Quality, Room, Standard, StagingPhotoStatus, Style, VariationCheck, Verdict,
+  Classification, FurnitureColorId, PageTheme, Purpose, Quality, Room, Standard, StagingPhotoStatus, Style, VariationCheck, Verdict,
 } from "@imob/shared";
 
 const createdAt = () => timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
@@ -91,7 +91,6 @@ export const stagings = pgTable(
     furnitureColors: jsonb("furniture_colors").$type<FurnitureColorId[]>().notNull().default([]),
     customInstructions: text("custom_instructions").notNull().default(""),
     pageTheme: text("page_theme").$type<PageTheme>().notNull().default("auto"),
-    pageCompare: text("page_compare").$type<PageCompareMode>().notNull().default("completo"),
     publishState: text("publish_state").$type<PublishState>().notNull().default("none"),
     publishError: text("publish_error"),
     slug: text("slug").unique(),

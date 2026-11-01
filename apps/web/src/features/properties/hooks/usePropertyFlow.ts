@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import type { PropertyDetailDTO } from "@imob/shared";
-import { plural } from "../../../shared/lib/format";
 import { useStepFlow } from "../../../shared/lib/useStepFlow";
 import type { Step } from "../../../shared/ui/Stepper";
 import type { ListingForm } from "../../listing/hooks/useListingForm";
@@ -29,23 +28,17 @@ export function usePropertyFlow(property: PropertyDetailDTO, listing: ListingFor
   const readyPhotos = property.photos.filter((p) => p.status === "ready" && p.roomConfirmed).length;
   let canNext = false;
   let onNext = () => {};
-  let hint: string | undefined;
 
   switch (flow.active) {
     case "fotos":
       canNext = readyPhotos > 0 && property.status !== "processing";
-      hint = property.status === "processing" ? "Identificando cômodos…" : readyPhotos ? plural(readyPhotos, "foto pronta", "fotos prontas") : "Envie as fotos para continuar";
       onNext = () => flow.go("anuncio");
       break;
     case "anuncio":
       canNext = true;
-      hint = listing.dirty ? "Alterações serão salvas ao avançar" : "Tudo opcional";
       onNext = () => listing.submit(() => flow.go("decoracoes"));
-      break;
-    case "decoracoes":
-      hint = plural(property.stagingCount, "decoração", "decorações");
       break;
   }
 
-  return { ...flow, nav: { canPrev: flow.previous !== null, onPrev: () => flow.previous && flow.go(flow.previous), canNext, onNext, nextLoading: listing.saving, hideNext: flow.isLast, hint } };
+  return { ...flow, nav: { canPrev: flow.previous !== null, onPrev: () => flow.previous && flow.go(flow.previous), canNext, onNext, nextLoading: listing.saving, hideNext: flow.isLast } };
 }

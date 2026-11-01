@@ -5,5 +5,6 @@ export const propertiesApi = {
   list: () => http.get<PropertySummaryDTO[]>("/properties").then((r) => r.data),
   get: (id: string) => http.get<PropertyDetailDTO>(`/properties/${id}`).then((r) => r.data),
   create: (input: CreatePropertyInput) => http.post<PropertyDetailDTO>("/properties", input).then((r) => r.data),
+  remove: (id: string) => http.delete(`/properties/${id}`).then(() => undefined),
   update: (id: string, input: UpdatePropertyInput) => http.patch<PropertyDetailDTO>(`/properties/${id}`, input).then((r) => r.data),
 };

@@ -1,10 +1,10 @@
-import { useMemo } from "react";
+import { createElement, useMemo, type ReactNode } from "react";
 import type { StagingDetailDTO } from "@imob/shared";
-import { STANDARD_INFO, STYLE_INFO } from "@imob/shared";
-import { plural } from "../../../shared/lib/format";
 import { useStepFlow } from "../../../shared/lib/useStepFlow";
 import type { Step } from "../../../shared/ui/Stepper";
 import type { StyleSettings } from "../../generation/hooks/useStyleSettings";
+import { ShieldIcon } from "../../../shared/ui/icons";
+import { usePublish } from "../../publishing/hooks/usePublish";
 import { CAN_PUBLISH } from "../lib/status";
 import { useUpdateStaging } from "./useStagings";
 
@@ -18,6 +18,7 @@ const STEPS: Step<StagingStep>[] = [
 
 export function useStagingFlow(staging: StagingDetailDTO, settings: StyleSettings) {
   const save = useUpdateStaging(staging.id);
+  const publish = usePublish(staging.id);
   const included = staging.photos.filter((p) => p.include).length;
   const hasSaved = Boolean(staging.style && staging.standard);
 
@@ -41,13 +42,14 @@ export function useStagingFlow(staging: StagingDetailDTO, settings: StyleSetting
 
   let canNext = false;
   let onNext = () => {};
-  let hint: string | undefined;
+  let nextLabel: string | undefined;
+  let nextIcon: ReactNode;
+  let nextLoading = save.updating;
 
   switch (flow.active) {
     case "estilo": {
       const { style, standard, dirty, instructionError } = settings;
       canNext = Boolean(style && standard) && included > 0 && !(dirty && generating) && !instructionError;
-      hint = style && standard ? `${STYLE_INFO[style].label}, padrão ${STANDARD_INFO[standard].label.toLowerCase()} · ${plural(included, "foto", "fotos")}` : "Escolha um estilo";
       onNext = () => {
         if (!style || !standard) return;
         if (!dirty) return flow.go("escolha");
@@ -57,16 +59,25 @@ export function useStagingFlow(staging: StagingDetailDTO, settings: StyleSetting
     }
     case "escolha":
       canNext = CAN_PUBLISH.has(staging.status);
-      hint = generating ? "Aguarde terminar a geração" : canNext ? "Tudo pronto para publicar" : "Gere e escolha as variações";
       onNext = () => flow.go("publicar");
       break;
-    case "publicar":
+    // Na última etapa o botão do topo publica.
+    case "publicar": {
+      const publishing = staging.status === "publishing";
+      const upToDate = staging.status === "published";
+      canNext = CAN_PUBLISH.has(staging.status) && !upToDate;
+      nextLabel = upToDate ? "Publicada" : staging.published ? "Atualizar publicação" : "Publicar";
+      nextIcon = createElement(ShieldIcon, { size: 18 });
+      nextLoading = publish.requesting || publishing;
+      onNext = publish.publish;
       break;
+    }
   }
 
   return {
     ...flow,
     saveError: save.error,
-    nav: { canPrev: flow.previous !== null, onPrev: () => flow.previous && flow.go(flow.previous), canNext, onNext, nextLoading: save.updating, hideNext: flow.isLast, hint },
+    publish,
+    nav: { canPrev: flow.previous !== null, onPrev: () => flow.previous && flow.go(flow.previous), canNext, onNext, nextLoading, nextLabel, nextIcon },
   };
 }

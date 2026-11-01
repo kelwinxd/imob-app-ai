@@ -6,7 +6,7 @@ import {
   type CreateStagingInput, type StagingDetailDTO, type UpdateStagingInput, type UpdateStagingPhotoInput,
 } from "@imob/shared";
 import { db } from "../../db/client";
-import { stagingPhotos, stagingReferences, stagings } from "../../db/schema";
+import { generations, stagingPhotos, stagingReferences, stagings } from "../../db/schema";
 import { getAi } from "../../shared/ai";
 import { badRequest, conflict, notFound, unprocessable } from "../../shared/http";
 import { keys, storage } from "../../shared/storage";
@@ -67,7 +67,10 @@ export async function updateStaging(userId: string, stagingId: string, input: Up
 export async function deleteStaging(userId: string, stagingId: string): Promise<void> {
   const { staging, status } = await assertNotBusy(userId, stagingId);
   if (status === "generating") throw conflict(BUSY_MESSAGE);
+  const gens = await db.select({ id: generations.id, photoId: generations.photoId }).from(generations).where(eq(generations.stagingId, stagingId));
   await db.delete(stagings).where(eq(stagings.id, stagingId));
+  await storage.removePrefix(keys.stagingDir(staging.propertyId, stagingId));
+  for (const g of gens) await storage.removePrefix(keys.generationDir(staging.propertyId, g.photoId, g.id));
   await appendEvent(staging.propertyId, "excluir_decoracao", { decoracao: stagingId, nome: staging.name, pagina: staging.slug });
 }
 

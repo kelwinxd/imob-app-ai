@@ -1,14 +1,12 @@
 import {
   BRAND_COLOR_PATTERN, DEFAULT_BRAND_COLOR, formatPhoneBR, formatPriceBRL, PURPOSE_LABELS,
-  type PageCompareMode, type PageTheme, type PropertyDetails,
+  type PageTheme, type PropertyDetails,
 } from "@imob/shared";
-import { escapeXml as esc, joinPt } from "./seal";
+import { escapeXml as esc } from "./seal";
 
 export interface PublicPagePhoto {
   roomLabel: string;
-  originalSrc: string;
   decoratedSrc: string;
-  items: string[];
 }
 
 export interface PublicPageBrand {
@@ -28,7 +26,8 @@ export interface PublicPageInput {
   brand?: PublicPageBrand;
   details?: PropertyDetails;
   theme?: PageTheme;
-  compare?: PageCompareMode;
+  /** Mostra uma faixa no topo e troca o rodapé (pré-visualização antes de publicar). */
+  preview?: boolean;
 }
 
 const plural = (n: number, one: string, many: string) => `${n.toLocaleString("pt-BR")} ${n === 1 ? one : many}`;
@@ -56,17 +55,17 @@ function readableOn(hex: string): string {
 const waDigits = (digits: string) => (digits.length === 10 || digits.length === 11 ? `55${digits}` : digits);
 const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join("") || "•";
 
-const DARK_VARS = ":root{--bg:#141413;--fg:#ecebe6;--muted:#a3a29b;--card:#1d1d1b;--line:#33322e}";
+const DARK_VARS = "--bg:#141413;--fg:#ecebe6;--muted:#a3a29b;--card:#1d1d1b;--line:#33322e;color-scheme:dark";
 
-function themeCss(theme: PageTheme): string {
-  if (theme === "escuro") return `${DARK_VARS}\nhtml{color-scheme:dark}`;
-  if (theme === "claro") return "html{color-scheme:light}";
-  return `@media (prefers-color-scheme:dark){${DARK_VARS}}`;
-}
+// Os três temas vão sempre no CSS; o atributo data-theme do <html> escolhe qual vale.
+// Assim a prévia do app troca o tema na hora, sem recarregar a página.
+const THEME_CSS = `html[data-theme=escuro]{${DARK_VARS}}
+html[data-theme=claro]{color-scheme:light}
+@media (prefers-color-scheme:dark){html[data-theme=auto]{${DARK_VARS}}}`;
 
-const CSS = (brand: string, onBrand: string, theme: PageTheme) => `
+const CSS = (brand: string, onBrand: string) => `
 :root{--brand:${brand};--on-brand:${onBrand};--bg:#fafaf8;--fg:#1d1d1b;--muted:#5f5f5a;--card:#fff;--line:#e7e5df}
-${themeCss(theme)}
+${THEME_CSS}
 *{box-sizing:border-box}html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 a{color:inherit}
@@ -102,30 +101,18 @@ h2{font-size:1.3rem;margin:0 0 14px}
 .gallery a{display:block;border-radius:14px;overflow:hidden;background:var(--line)}
 .gallery img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;transition:transform .3s}
 .gallery a:hover img{transform:scale(1.03)}
+.preview-bar{background:#fde68a;color:#422006;text-align:center;font:600 13px/1.4 system-ui,sans-serif;padding:8px 12px}
+figure{margin:0}
 .gallery figcaption{font-size:13px;color:var(--muted);padding:6px 2px 0}
-.aviso{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--brand);padding:12px 16px;border-radius:10px;margin:0 0 20px}
-.pair{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:16px}
-.pair h3{font-size:1rem;margin:0 0 10px}
-.par{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-@media (max-width:700px){.par{grid-template-columns:1fr}}
-figure{margin:0}.par img{width:100%;height:auto;display:block;border-radius:10px}
-.par figcaption{font-size:.85rem;color:var(--muted);margin-top:6px}
-.itens{font-size:.9rem;color:var(--muted);margin:10px 0 0}
 .contact{background:var(--brand);color:var(--on-brand);border-radius:20px;padding:24px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;margin:12px 0 28px}
 .contact h2{margin:0}
 .contact p{margin:4px 0 0;opacity:.9}
 .contact .btn{background:var(--on-brand);color:var(--brand)}
 footer{border-top:1px solid var(--line);color:var(--muted);font-size:13px;padding:20px 0 36px}
 footer p{margin:4px 0}
-.disclosure{border-top:1px solid var(--line);padding:20px 0 8px;font-size:14px;color:var(--muted)}
-.disclosure summary{cursor:pointer;color:var(--fg);font-weight:600;list-style-position:outside}
-.disclosure p{margin:8px 0 0}
-.mini{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:14px}
-.mini img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block}
-.mini figcaption{font-size:12px;margin-top:4px}
 `;
 
-export function renderPublicPage({ title, publishedAt, registry, photos, brand, details, theme = "auto", compare = "completo" }: PublicPageInput): string {
+export function renderPublicPage({ title, publishedAt, registry, photos, brand, details, theme = "auto", preview = false }: PublicPageInput): string {
   const color = brand && BRAND_COLOR_PATTERN.test(brand.color) ? brand.color : DEFAULT_BRAND_COLOR;
   const onBrand = readableOn(color);
   const cover = photos[0];
@@ -156,7 +143,7 @@ export function renderPublicPage({ title, publishedAt, registry, photos, brand, 
       ${whatsappHref ? `<a class="btn btn-brand" href="${esc(whatsappHref)}" target="_blank" rel="noopener">Agendar visita</a>` : ""}
       ${phoneHref ? `<a class="btn btn-ghost" href="${esc(phoneHref)}">Ligar</a>` : ""}
     </div>` : ""}
-    <p class="note">${compare === "resumido" ? "Imagens decoradas com IA; móveis ilustrativos." : "As fotos foram decoradas virtualmente com IA; os móveis são ilustrativos."} <a href="#originais">Ver as fotos originais</a>.</p>
+    <p class="note">Imagens ilustrativas: fotos decoradas virtualmente com IA; os móveis não acompanham o imóvel.</p>
   </div>
 </section>`;
 
@@ -170,34 +157,6 @@ export function renderPublicPage({ title, publishedAt, registry, photos, brand, 
         .join("")}</div></section>`
     : "";
 
-  // Modo resumido: o aviso de IA continua obrigatório, mas fica curto no fim e as originais ficam recolhidas.
-  const compactOriginals = `<section class="disclosure" id="originais">
-  <details>
-    <summary>Imagens decoradas virtualmente com IA · ver fotos originais</summary>
-    <p>Os móveis e objetos são ilustrativos e não acompanham o imóvel.</p>
-    <div class="mini">${photos
-      .map((p) => `<figure><img src="${esc(p.originalSrc)}" alt="${esc(p.roomLabel)}: foto original" loading="lazy"><figcaption>${esc(p.roomLabel)} · original</figcaption></figure>`)
-      .join("")}</div>
-  </details>
-</section>`;
-
-  const originals = `<section class="block" id="originais">
-  <h2>Fotos originais</h2>
-  <p class="aviso">Algumas fotos deste anúncio foram decoradas virtualmente com inteligência artificial. Os móveis e objetos são ilustrativos e não acompanham o imóvel. Abaixo, cada foto original ao lado da versão decorada.</p>
-  ${photos
-    .map(
-      (p) => `<div class="pair">
-    <h3>${esc(p.roomLabel)}</h3>
-    <div class="par">
-      <figure><img src="${esc(p.originalSrc)}" alt="${esc(p.roomLabel)}: foto original" loading="lazy"><figcaption>Foto original, sem alterações</figcaption></figure>
-      <figure><img src="${esc(p.decoratedSrc)}" alt="${esc(p.roomLabel)}: versão decorada com IA" loading="lazy"><figcaption>Decorada com IA (móveis ilustrativos)</figcaption></figure>
-    </div>
-    ${p.items.length ? `<p class="itens">Itens ilustrativos adicionados: ${esc(joinPt(p.items))}.</p>` : ""}
-  </div>`,
-    )
-    .join("\n")}
-</section>`;
-
   const contact = brand && (whatsappHref || phoneHref)
     ? `<section class="contact">
   <div><h2>Gostou do imóvel?</h2><p>Fale com ${esc(brand.name)} e agende uma visita.</p></div>
@@ -210,26 +169,27 @@ export function renderPublicPage({ title, publishedAt, registry, photos, brand, 
     : "";
 
   return `<!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="${esc(theme)}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="${esc(color)}">
 <title>${esc(title)}${brand ? ` · ${esc(brand.name)}` : ""}</title>
-<style>${CSS(color, onBrand, theme)}</style>
+<style>${CSS(color, onBrand)}</style>
 </head>
 <body>
+${preview ? `<div class="preview-bar">Prévia: é assim que a página vai ficar depois de publicada</div>` : ""}
 ${header}
 <main class="wrap">
 ${hero}
 ${description}
 ${gallery}
-${compare === "resumido" ? `${contact}\n${compactOriginals}` : `${originals}\n${contact}`}
+${contact}
 </main>
 <footer><div class="wrap">
   ${footerInfo ? `<p>${esc(footerInfo)}</p>` : ""}
-  <p>Publicado em ${esc(date)}. Registro de verificação ${esc(registry.slice(0, 16))}.</p>
+  <p>${preview ? "Prévia, ainda não publicada." : `Publicado em ${esc(date)}. Registro de verificação ${esc(registry.slice(0, 16))}.`}</p>
 </div></footer>
 </body>
 </html>

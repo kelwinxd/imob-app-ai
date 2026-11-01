@@ -1,0 +1,1 @@
+ALTER TABLE "stagings" DROP COLUMN "page_compare";

@@ -30,6 +30,17 @@ export function useApplyPropertyDetail() {
   };
 }
 
+export function useDeleteProperty() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: propertiesApi.remove,
+    onSuccess: (_data, id) => {
+      qc.removeQueries({ queryKey: propertyKeys.detail(id) });
+      void qc.invalidateQueries({ queryKey: propertyKeys.list() });
+    },
+  });
+}
+
 export function useCreateProperty() {
   const apply = useApplyPropertyDetail();
   return useMutation({ mutationFn: propertiesApi.create, onSuccess: apply });

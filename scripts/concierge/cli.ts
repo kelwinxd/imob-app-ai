@@ -7,6 +7,7 @@ import { z } from "zod";
 import {
   buildDossier, createAi, DEFAULT_EDGE_THRESHOLD, defaultChoice, loadTemplates, makeWorkingCopy, parseSize,
   renderFinal, renderPublicPage, runGeneration, sha256, shortUrlOf, toJpeg,
+  type PublicPagePhoto,
 } from "@imob/core";
 import {
   privacyAlerts, PORTALS, QUALITIES, ROOM_LABELS, ROOMS, shouldIncludeByDefault, STANDARDS, STYLES,
@@ -307,17 +308,10 @@ async function cmdPublish() {
   await writeFile(join(out, "qrcode.png"), qrPng);
   const pageHead = await appendEvent(events, "pagina_publica", { url, fotos: selected.map((p) => p.id) });
 
-  const pagePhotos = [];
+  const pagePhotos: PublicPagePhoto[] = [];
   for (const p of selected) {
-    await writeFile(join(out, "site/img", `${p.id}-original.jpg`), await toJpeg(await readFile(join(out, p.workingFile)), 1600, 85));
     await writeFile(join(out, "site/img", `${p.id}-decorada.jpg`), await toJpeg(await readFile(join(out, p.final!.file)), 1600, 85));
-    const v = p.generation!.variations.find((x) => x.index === p.final!.variation)!;
-    pagePhotos.push({
-      roomLabel: ROOM_LABELS[p.generation!.room],
-      originalSrc: `img/${p.id}-original.jpg`,
-      decoratedSrc: `img/${p.id}-decorada.jpg`,
-      items: v.check?.vision.itens_adicionados ?? [],
-    });
+    pagePhotos.push({ roomLabel: ROOM_LABELS[p.generation!.room], decoratedSrc: `img/${p.id}-decorada.jpg` });
   }
   const siteFile = join(out, "site", "index.html");
   await writeFile(siteFile, renderPublicPage({ title: m.property.title, publishedAt: new Date(), registry: pageHead, photos: pagePhotos }), "utf8");

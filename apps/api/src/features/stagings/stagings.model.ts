@@ -176,7 +176,6 @@ export function toStagingDetail(b: StagingBundle): StagingDetailDTO {
     furnitureColors: s.furnitureColors,
     customInstructions: s.customInstructions,
     pageTheme: s.pageTheme,
-    pageCompare: s.pageCompare,
     references: b.references.map((r) => ({ id: r.id, url: `/api/stagings/${s.id}/references/${r.id}` })),
     publishError: s.publishError,
     photos: photoDTOs,
