@@ -195,3 +195,31 @@ ${contact}
 </html>
 `;
 }
+
+// Mostrada no lugar da página quando o corretor desativa a publicação.
+export function renderUnavailablePage({ brandName, theme = "auto" }: { brandName?: string; theme?: PageTheme }): string {
+  const who = brandName ? `Fale com ${esc(brandName)} para saber mais.` : "Fale com o corretor responsável para saber mais.";
+  return `<!doctype html>
+<html lang="pt-BR" data-theme="${esc(theme)}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Página indisponível</title>
+<style>
+:root{--bg:#fafaf8;--fg:#1d1d1b;--muted:#5f5f5a;--card:#fff;--line:#e7e5df}
+${THEME_CSS}
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:420px;text-align:center;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:32px 24px}
+h1{margin:0 0 8px;font-size:22px}
+p{margin:0;color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+<h1>Este anúncio não está disponível</h1>
+<p>A página foi desativada pelo anunciante. ${who}</p>
+</main>
+</body>
+</html>`;
+}

@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { renderUnavailablePage } from "@imob/core";
 import { and, eq, isNotNull } from "drizzle-orm";
 import { db } from "../../db/client";
 import { properties, stagingPhotos, stagings } from "../../db/schema";
@@ -11,7 +12,7 @@ export const publicPageRouter = Router();
 
 const SLUG = /^[a-z0-9]{6,32}$/;
 
-async function publishedStaging(slug: string) {
+async function findPublished(slug: string) {
   if (!SLUG.test(slug)) throw notFound("Página não encontrada.");
   const [row] = await db
     .select({ staging: stagings, property: properties })
@@ -22,9 +23,23 @@ async function publishedStaging(slug: string) {
   return row;
 }
 
+// Com a publicação desativada, nada da página abre (fotos e logo incluídos).
+async function publishedStaging(slug: string) {
+  const row = await findPublished(slug);
+  if (!row.staging.publicEnabled) throw notFound("Página não encontrada.");
+  return row;
+}
+
 // Marca e dados do imóvel são lidos na hora: editar o perfil ou a descrição atualiza a página sem publicar de novo.
 publicPageRouter.get("/:slug", async (req, res) => {
-  const { staging, property } = await publishedStaging(req.params.slug);
+  const { staging, property } = await findPublished(req.params.slug);
+  res.setHeader("X-Robots-Tag", "noindex");
+  if (!staging.publicEnabled) {
+    const profile = await resolveProfile(property.userId);
+    res.setHeader("Cache-Control", "no-store");
+    res.status(404).type("html").send(renderUnavailablePage({ brandName: profile.companyName || undefined, theme: staging.pageTheme }));
+    return;
+  }
   const base = `/i/${staging.slug}`;
   const html = await renderStagingPage({
     staging,
@@ -33,8 +48,8 @@ publicPageRouter.get("/:slug", async (req, res) => {
     photoSrc: (photo, row) => (row.final ? `${base}/img/${photo.id}/decorada.jpg?v=${row.final.sha256.slice(0, 12)}` : null),
     logoSrc: (logoKey) => `${base}/logo.png?v=${logoKey.slice(-16, -4)}`,
   });
-  res.setHeader("X-Robots-Tag", "noindex");
-  res.setHeader("Cache-Control", "public, max-age=60");
+  // Sempre revalida: desativar a publicação precisa valer na hora.
+  res.setHeader("Cache-Control", "no-cache");
   res.type("html").send(html);
 });
 

@@ -64,6 +64,11 @@ export function PublishStep({ staging, publishError }: PublishStepProps) {
         {staging.status === "publish_failed" && <Alert tone="danger" title="A publicação falhou">{staging.publishError}</Alert>}
         {outdated && <Alert tone="warning">Você mudou fotos ou escolhas depois da última publicação. Publique de novo para atualizar a página e o dossiê.</Alert>}
         {publishError && <Alert tone="danger">{publishError}</Alert>}
+        {staging.published && !staging.publicEnabled && (
+          <Alert tone="warning" title="Publicação desativada">
+            O link e o QR code não abrem a página. Para reativar, use a engrenagem ao lado do nome da decoração.
+          </Alert>
+        )}
 
         {published && staging.published && <PublishedResult published={staging.published} copied={copied} onCopy={() => copy(staging.published!.publicUrl)} />}
 

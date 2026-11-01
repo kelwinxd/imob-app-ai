@@ -91,6 +91,8 @@ export const stagings = pgTable(
     furnitureColors: jsonb("furniture_colors").$type<FurnitureColorId[]>().notNull().default([]),
     customInstructions: text("custom_instructions").notNull().default(""),
     pageTheme: text("page_theme").$type<PageTheme>().notNull().default("auto"),
+    /** Desligado, o link público para de abrir (sem apagar nada da publicação). */
+    publicEnabled: boolean("public_enabled").notNull().default(true),
     publishState: text("publish_state").$type<PublishState>().notNull().default("none"),
     publishError: text("publish_error"),
     slug: text("slug").unique(),

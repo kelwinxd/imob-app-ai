@@ -16,7 +16,7 @@ import { PublishStep } from "../../publishing/containers/PublishStep";
 import { DeleteStagingDialog } from "../components/DeleteStagingDialog";
 import { useRepublishPrompt } from "../hooks/useRepublishPrompt";
 import { useStagingFlow } from "../hooks/useStagingFlow";
-import { useDeleteStaging, useStaging } from "../hooks/useStagings";
+import { useDeleteStaging, useStaging, useUpdateStaging } from "../hooks/useStagings";
 
 export function StagingPage() {
   const { id = "", stagingId = "" } = useParams();
@@ -42,6 +42,8 @@ function StagingFlowView({ staging }: { staging: StagingDetailDTO }) {
   const republish = useRepublishPrompt(staging);
   const navigate = useNavigate();
   const remove = useDeleteStaging(staging.propertyId);
+  const link = useUpdateStaging(staging.id);
+  const publicEnabled = link.pending?.publicEnabled ?? staging.publicEnabled;
   const [confirmDelete, setConfirmDelete] = useState(false);
   const busy = staging.status === "generating" || staging.status === "publishing";
 
@@ -54,6 +56,15 @@ function StagingFlowView({ staging }: { staging: StagingDetailDTO }) {
           <SettingsMenu
             label="Configurações da decoração"
             items={[
+              {
+                kind: "toggle",
+                label: "Ativar publicação",
+                checked: publicEnabled,
+                description: publicEnabled ? "O link e o QR code abrem a página." : "Desligada: o link e o QR code não abrem.",
+                disabled: !staging.published || staging.status === "publishing",
+                hint: staging.published ? "Aguarde terminar a publicação" : "Disponível depois de publicar",
+                onChange: (on) => link.update({ publicEnabled: on }),
+              },
               {
                 label: "Excluir decoração",
                 icon: <TrashIcon size={16} />,
@@ -75,6 +86,7 @@ function StagingFlowView({ staging }: { staging: StagingDetailDTO }) {
         reachable={flow.reachable}
         onSelect={flow.goTo}
       />
+      {link.error && <Alert tone="danger">{link.error}</Alert>}
       {flow.active === "estilo" && <StyleStep staging={staging} settings={settings} saveError={flow.saveError} />}
       {flow.active === "escolha" && <ChoiceStep staging={staging} onEditStyle={() => flow.go("estilo")} />}
       {flow.active === "publicar" && <PublishStep staging={staging} publishError={flow.publish.error} />}

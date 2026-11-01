@@ -1,0 +1,1 @@
+ALTER TABLE "stagings" ADD COLUMN "public_enabled" boolean DEFAULT true NOT NULL;

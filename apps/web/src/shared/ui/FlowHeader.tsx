@@ -33,7 +33,7 @@ export function FlowHeader<T extends string>({ title, back, nav, settings, steps
       <PageHeader
         title={title}
         back={back}
-        leading={settings}
+        titleAction={settings}
         actions={
           <StepNav
             onPrev={nav.onPrev}

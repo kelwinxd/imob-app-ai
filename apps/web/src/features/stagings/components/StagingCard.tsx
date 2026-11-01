@@ -47,7 +47,8 @@ export function StagingCard({ staging, to, onDelete }: StagingCardProps) {
 
         <div className="mt-auto flex flex-wrap items-center gap-2 pt-2">
           <Link to={to} className="inline-flex h-9 items-center rounded-xl bg-brand-600 px-3 text-sm font-medium text-white hover:bg-brand-700">Abrir</Link>
-          {staging.publicUrl && (
+          {staging.publicUrl && !staging.publicEnabled && <span className="text-xs font-medium text-amber-700">Link desativado</span>}
+          {staging.publicUrl && staging.publicEnabled && (
             <a href={staging.publicUrl} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-sm font-medium text-stone-700 ring-1 ring-stone-300 ring-inset hover:bg-stone-50">
               <ExternalIcon size={15} /> Página
             </a>

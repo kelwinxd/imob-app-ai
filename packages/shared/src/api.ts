@@ -45,6 +45,7 @@ export const UpdateStagingInputSchema = z.object({
     })
     .optional(),
   pageTheme: z.enum(PAGE_THEMES).optional(),
+  publicEnabled: z.boolean().optional(),
 });
 export type UpdateStagingInput = z.infer<typeof UpdateStagingInputSchema>;
 
@@ -140,6 +141,8 @@ export interface StagingSummaryDTO {
   standard: Standard | null;
   coverUrl: string | null;
   publicUrl: string | null;
+  /** Desligado, o link público e o QR code param de abrir. */
+  publicEnabled: boolean;
   createdAt: string;
   publishedAt: string | null;
 }

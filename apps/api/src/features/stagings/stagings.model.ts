@@ -66,6 +66,7 @@ export function toStagingSummary(s: StagingRow, eff: EffectivePhoto[]): StagingS
     standard: s.standard,
     coverUrl: coverOf(s, eff),
     publicUrl: s.slug && s.publishedAt ? publicUrlOf(s.slug) : null,
+    publicEnabled: s.publicEnabled,
     createdAt: s.createdAt.toISOString(),
     publishedAt: s.publishedAt?.toISOString() ?? null,
   };

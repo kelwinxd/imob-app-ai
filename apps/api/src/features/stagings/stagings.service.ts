@@ -61,6 +61,9 @@ export async function updateStaging(userId: string, stagingId: string, input: Up
   }
   const patch = Object.fromEntries(Object.entries(input).filter(([, v]) => v !== undefined));
   if (Object.keys(patch).length) await db.update(stagings).set(patch).where(eq(stagings.id, stagingId));
+  if (input.publicEnabled !== undefined && input.publicEnabled !== staging.publicEnabled) {
+    await appendEvent(staging.propertyId, input.publicEnabled ? "ativar_pagina" : "desativar_pagina", { decoracao: stagingId, pagina: staging.slug });
+  }
   return getStagingDetail(userId, stagingId);
 }
 
