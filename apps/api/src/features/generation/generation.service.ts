@@ -84,6 +84,7 @@ export async function generatePhotoJob({ stagingId, photoId, variations: count }
       quality: env.IMAGE_QUALITY,
       variations: count,
       furnitureColors: staging.furnitureColors,
+      customInstructions: staging.customInstructions,
       references: await Promise.all(sortedRefs.map((r) => storage.read(r.key))),
     });
 
@@ -102,7 +103,11 @@ export async function generatePhotoJob({ stagingId, photoId, variations: count }
       });
     }
     const chosen = varRows.find((v) => v.index === defaultChoice(outcome.variations));
-    const options = { furnitureColors: staging.furnitureColors, referenceSha256: sortedRefs.map((r) => r.sha256) };
+    const options = {
+      furnitureColors: staging.furnitureColors,
+      referenceSha256: sortedRefs.map((r) => r.sha256),
+      customInstructions: staging.customInstructions,
+    };
 
     await db.transaction(async (tx) => {
       await tx.insert(generations).values({
@@ -118,7 +123,7 @@ export async function generatePhotoJob({ stagingId, photoId, variations: count }
     });
     await appendEvent(staging.propertyId, "gerar", {
       decoracao: stagingId, foto: photo.id, modelo: outcome.model, tamanho: outcome.size, instrucoes: outcome.templateVersion,
-      estilo: staging.style, padrao: staging.standard, comodo: photo.roomConfirmed, cores: staging.furnitureColors,
+      estilo: staging.style, padrao: staging.standard, comodo: photo.roomConfirmed, cores: staging.furnitureColors, pedido: staging.customInstructions,
       referencias: options.referenceSha256, entrada_sha256: outcome.inputSha256,
       variacoes: varRows.map((v) => ({ n: v.index, sha256: v.sha256, veredito: v.verdict, bordas: Number(v.edgeScore!.toFixed(3)) })),
     });

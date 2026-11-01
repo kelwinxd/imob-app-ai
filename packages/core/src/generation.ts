@@ -36,6 +36,7 @@ export interface GenerationRequest {
   quality: Quality;
   variations?: number;
   furnitureColors?: readonly FurnitureColorId[];
+  customInstructions?: string;
   references?: Buffer[];
   longEdge?: number;
   fixedSize?: { width: number; height: number };
@@ -71,6 +72,7 @@ export async function runGeneration(req: GenerationRequest): Promise<GenerationO
   const prompt = buildPrompt(req.templates, req.room, req.style, req.standard, {
     furnitureColors: req.furnitureColors,
     hasReferences: references.length > 0,
+    customInstructions: req.customInstructions,
   });
   const createdAt = new Date().toISOString();
   const count = req.variations ?? 3;

@@ -1,7 +1,8 @@
 import { z } from "zod";
 import type { VariationCheck } from "./checks";
 import { FURNITURE_COLOR_IDS, MAX_FURNITURE_COLORS, ROOMS, STANDARDS, STYLES, type Room, type Standard, type Style, type Verdict } from "./domain";
-import type { PropertyDetails } from "./landing";
+import { instructionRuleViolation, MAX_INSTRUCTION_LENGTH } from "./instructions";
+import { PAGE_COMPARE_MODES, PAGE_THEMES, type PageCompareMode, type PageTheme, type PropertyDetails } from "./landing";
 
 // ---------- requests ----------
 
@@ -34,6 +35,17 @@ export const UpdateStagingInputSchema = z.object({
   style: z.enum(STYLES).optional(),
   standard: z.enum(STANDARDS).optional(),
   furnitureColors: z.array(z.enum(FURNITURE_COLOR_IDS)).max(MAX_FURNITURE_COLORS, `Escolha até ${MAX_FURNITURE_COLORS} cores`).optional(),
+  customInstructions: z
+    .string()
+    .trim()
+    .max(MAX_INSTRUCTION_LENGTH, `Use no máximo ${MAX_INSTRUCTION_LENGTH} caracteres.`)
+    .superRefine((v, ctx) => {
+      const reason = instructionRuleViolation(v);
+      if (reason) ctx.addIssue({ code: "custom", message: reason });
+    })
+    .optional(),
+  pageTheme: z.enum(PAGE_THEMES).optional(),
+  pageCompare: z.enum(PAGE_COMPARE_MODES).optional(),
 });
 export type UpdateStagingInput = z.infer<typeof UpdateStagingInputSchema>;
 
@@ -142,6 +154,9 @@ export interface StagingDetailDTO extends StagingSummaryDTO {
   propertyId: string;
   propertyTitle: string;
   furnitureColors: string[];
+  customInstructions: string;
+  pageTheme: PageTheme;
+  pageCompare: PageCompareMode;
   references: ReferenceImageDTO[];
   publishError: string | null;
   photos: StagingPhotoDTO[];

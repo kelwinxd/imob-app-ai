@@ -3,6 +3,7 @@ import { Alert } from "../../../shared/ui/Alert";
 import { Card } from "../../../shared/ui/Card";
 import { useReferenceImages, useStagingPhotoInclude } from "../../stagings/hooks/useStagings";
 import { FurnitureColorPicker } from "../components/FurnitureColorPicker";
+import { InstructionField } from "../components/InstructionField";
 import { PhotoIncludeGrid } from "../components/PhotoIncludeGrid";
 import { ReferenceImagesInput } from "../components/ReferenceImagesInput";
 import { StandardPicker, StylePicker } from "../components/StylePicker";
@@ -33,6 +34,7 @@ export function StyleStep({ staging, settings, saveError }: { staging: StagingDe
           <p className="mt-0.5 text-xs text-stone-600">Deixe em branco para a IA decorar só pelo estilo, ou ajude com cores e móveis de referência.</p>
         </div>
         <FurnitureColorPicker value={settings.colors} onToggle={settings.toggleColor} />
+        <InstructionField value={settings.instructions} error={settings.instructionError} disabled={busy} onChange={settings.setInstructions} />
         <ReferenceImagesInput
           images={staging.references}
           uploading={references.uploading}

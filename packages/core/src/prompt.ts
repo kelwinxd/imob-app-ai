@@ -12,6 +12,7 @@ const TemplatesSchema = z.object({
   preserve: z.string(),
   colors: z.string(),
   references: z.string(),
+  custom: z.string(),
   layouts: z.array(z.string()).min(1),
   rooms: z.record(z.enum(ROOMS), z.object({ label: z.string(), furniture: z.string() })),
   styles: z.record(z.enum(STYLES), z.string()),
@@ -27,7 +28,11 @@ export async function loadTemplates(): Promise<Templates> {
 export interface PromptOptions {
   furnitureColors?: readonly FurnitureColorId[];
   hasReferences?: boolean;
+  customInstructions?: string;
 }
+
+// Remove aspas angulares e quebras de linha para o pedido não "fechar" o trecho delimitado no prompt.
+const sanitizeInstruction = (s: string) => s.replace(/[«»\r\n]+/g, " ").replace(/\s+/g, " ").trim();
 
 export function buildPrompt(t: Templates, room: Room, style: Style, standard: Standard, options: PromptOptions = {}): string {
   const r = t.rooms[room];
@@ -43,6 +48,8 @@ export function buildPrompt(t: Templates, room: Room, style: Style, standard: St
     `${t.standards[standard]}.`,
     colors.length ? t.colors.replace("{cores}", joinPt(colors)) : null,
     options.hasReferences ? t.references : null,
+    options.customInstructions?.trim() ? t.custom.replace("{pedido}", sanitizeInstruction(options.customInstructions)) : null,
+    // As regras de preservação vêm por último para prevalecerem sobre o pedido livre.
     t.preserve,
   ]
     .filter(Boolean)

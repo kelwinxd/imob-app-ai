@@ -4,6 +4,15 @@ export const PURPOSES = ["venda", "aluguel"] as const;
 export type Purpose = (typeof PURPOSES)[number];
 export const PURPOSE_LABELS: Record<Purpose, string> = { venda: "Venda", aluguel: "Aluguel" };
 
+export const PAGE_THEMES = ["auto", "claro", "escuro"] as const;
+export type PageTheme = (typeof PAGE_THEMES)[number];
+export const PAGE_THEME_LABELS: Record<PageTheme, string> = { auto: "Automático", claro: "Claro", escuro: "Escuro" };
+
+/** "completo": seção antes/depois aberta; "resumido": aviso curto no fim, originais recolhidas. */
+export const PAGE_COMPARE_MODES = ["completo", "resumido"] as const;
+export type PageCompareMode = (typeof PAGE_COMPARE_MODES)[number];
+export const PAGE_COMPARE_LABELS: Record<PageCompareMode, string> = { completo: "Antes e depois em destaque", resumido: "Resumido no fim da página" };
+
 export const DEFAULT_BRAND_COLOR = "#8a5a2b";
 export const BRAND_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
 export const MAX_LOGO_BYTES = 2 * 1024 * 1024;

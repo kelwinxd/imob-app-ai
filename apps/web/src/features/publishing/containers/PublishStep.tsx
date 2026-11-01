@@ -7,13 +7,16 @@ import { Card } from "../../../shared/ui/Card";
 import { ShieldIcon } from "../../../shared/ui/icons";
 import { Spinner } from "../../../shared/ui/Spinner";
 import { useProfile } from "../../profile/hooks/useProfile";
+import { useUpdateStaging } from "../../stagings/hooks/useStagings";
 import { CAN_PUBLISH } from "../../stagings/lib/status";
+import { PageOptions } from "../components/PageOptions";
 import { PublishedResult } from "../components/PublishedResult";
 import { PublishPreview } from "../components/PublishPreview";
 import { usePublish } from "../hooks/usePublish";
 
 export function PublishStep({ staging }: { staging: StagingDetailDTO }) {
   const publish = usePublish(staging.id);
+  const pageOptions = useUpdateStaging(staging.id);
   const profile = useProfile();
   const { copied, copy } = useCopy();
   const photos = staging.photos.filter((p) => p.include && p.chosenVariationId);
@@ -47,6 +50,15 @@ export function PublishStep({ staging }: { staging: StagingDetailDTO }) {
       {publish.error && <Alert tone="danger">{publish.error}</Alert>}
 
       {published && staging.published && <PublishedResult published={staging.published} copied={copied} onCopy={() => copy(staging.published!.publicUrl)} />}
+
+      <PageOptions
+        theme={staging.pageTheme}
+        compare={staging.pageCompare}
+        saving={pageOptions.updating}
+        onThemeChange={(pageTheme) => pageOptions.update({ pageTheme })}
+        onCompareChange={(pageCompare) => pageOptions.update({ pageCompare })}
+      />
+      {pageOptions.error && <Alert tone="danger">{pageOptions.error}</Alert>}
 
       <PublishPreview photos={photos} />
 

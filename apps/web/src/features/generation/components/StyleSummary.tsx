@@ -7,10 +7,11 @@ interface StyleSummaryProps {
   standard: Standard | null;
   colors: string[];
   referenceCount: number;
+  instructions: string;
   onEdit: () => void;
 }
 
-export function StyleSummary({ style, standard, colors, referenceCount, onEdit }: StyleSummaryProps) {
+export function StyleSummary({ style, standard, colors, referenceCount, instructions, onEdit }: StyleSummaryProps) {
   const swatches = FURNITURE_COLORS.filter((c) => colors.includes(c.id));
   return (
     <div className="flex items-center gap-3 rounded-xl border border-stone-200 bg-white p-2.5">
@@ -25,6 +26,11 @@ export function StyleSummary({ style, standard, colors, referenceCount, onEdit }
             ))}
             {referenceCount > 0 && <span className="text-[11px] text-stone-500">{plural(referenceCount, "referência", "referências")}</span>}
           </div>
+        )}
+        {instructions && (
+          <p className="mt-1 line-clamp-2 text-[11px] text-stone-600" title={instructions}>
+            “{instructions}”
+          </p>
         )}
       </div>
       <button type="button" onClick={onEdit} className="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-brand-700 hover:bg-brand-50">

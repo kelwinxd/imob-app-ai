@@ -45,13 +45,13 @@ export function useStagingFlow(staging: StagingDetailDTO, settings: StyleSetting
 
   switch (flow.active) {
     case "estilo": {
-      const { style, standard, colors, dirty } = settings;
-      canNext = Boolean(style && standard) && included > 0 && !(dirty && generating);
+      const { style, standard, dirty, instructionError } = settings;
+      canNext = Boolean(style && standard) && included > 0 && !(dirty && generating) && !instructionError;
       hint = style && standard ? `${STYLE_INFO[style].label}, padrão ${STANDARD_INFO[standard].label.toLowerCase()} · ${plural(included, "foto", "fotos")}` : "Escolha um estilo";
       onNext = () => {
         if (!style || !standard) return;
         if (!dirty) return flow.go("escolha");
-        save.update({ style, standard, furnitureColors: colors }, { onSuccess: () => flow.go("escolha") });
+        save.update(settings.toInput(), { onSuccess: () => flow.go("escolha") });
       };
       break;
     }

@@ -23,4 +23,5 @@ export const ArrowLeftIcon = (p: IconProps) => <Icon {...p}><path d="M19 12H5m0 
 export const ArrowRightIcon = (p: IconProps) => <Icon {...p}><path d="M5 12h14m0 0-6-6m6 6-6 6" /></Icon>;
 export const HomeIcon = (p: IconProps) => <Icon {...p}><path d="m3 11 9-7 9 7" /><path d="M5 10v10h14V10" /></Icon>;
 export const ShieldIcon = (p: IconProps) => <Icon {...p}><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6l-8-3Z" /><path d="m9 12 2 2 4-4" /></Icon>;
+export const ExpandIcon = (p: IconProps) => <Icon {...p}><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></Icon>;
 export const SparklesIcon = (p: IconProps) => <Icon {...p}><path d="M12 3v4M12 17v4M3 12h4M17 12h4" /><path d="m6 6 2 2M16 16l2 2M6 18l2-2M16 8l2-2" /></Icon>;

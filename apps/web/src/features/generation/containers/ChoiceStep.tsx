@@ -3,21 +3,27 @@ import { plural } from "../../../shared/lib/format";
 import { Alert } from "../../../shared/ui/Alert";
 import { Button } from "../../../shared/ui/Button";
 import { Card } from "../../../shared/ui/Card";
-import { SparklesIcon } from "../../../shared/ui/icons";
+import { DownloadIcon, SparklesIcon } from "../../../shared/ui/icons";
+import { Lightbox } from "../../../shared/ui/Lightbox";
 import { ChoicePhotoList } from "../components/ChoicePhotoList";
+import { GenerationProgress } from "../components/GenerationProgress";
 import { ImageStage } from "../components/ImageStage";
 import { StyleSummary } from "../components/StyleSummary";
 import { VariationCountPicker } from "../components/VariationCountPicker";
 import { VariationPanel } from "../components/VariationPanel";
 import { useChoiceState } from "../hooks/useChoiceState";
 import { useGenerate, useVariationChoice } from "../hooks/useGeneration";
+import { useGenerationProgress } from "../hooks/useGenerationProgress";
 
 export function ChoiceStep({ staging, onEditStyle }: { staging: StagingDetailDTO; onEditStyle: () => void }) {
   const state = useChoiceState(staging);
   const generate = useGenerate(staging.id);
   const choice = useVariationChoice(staging.id);
+  const progress = useGenerationProgress(staging.photos);
   const locked = staging.status === "publishing";
   const selected = state.selected;
+  const stage = state.stage;
+  const full = stage.full;
 
   if (state.photos.length === 0) {
     return <Alert tone="warning" title="Nenhuma foto marcada">Volte à etapa Estilo e marque as fotos que esta decoração deve usar.</Alert>;
@@ -26,15 +32,31 @@ export function ChoiceStep({ staging, onEditStyle }: { staging: StagingDetailDTO
   return (
     <section className="grid gap-5 lg:grid-cols-10" aria-label="Escolha das variações">
       <div className="order-1 lg:order-2 lg:col-span-7">
-        <div className="lg:sticky lg:top-20">
+        <div className="flex flex-col gap-3 lg:sticky lg:top-20">
           <ImageStage
-            src={state.stage.src}
-            label={state.stage.label}
-            overlay={state.stage.overlay}
-            compare={state.stage.canCompare ? { active: state.comparing, onChange: state.setComparing } : null}
+            src={stage.src}
+            label={stage.label}
+            overlay={stage.overlay}
+            compare={stage.canCompare ? { active: state.comparing, onChange: state.setComparing } : null}
+            onExpand={full ? () => state.setExpanded(true) : undefined}
+            download={full?.download ?? null}
           />
+          {progress.active && <GenerationProgress pct={progress.pct} done={progress.done} total={progress.total} remainingSec={progress.remainingSec} />}
         </div>
       </div>
+
+      {state.expanded && full && (
+        <Lightbox
+          src={full.src}
+          alt={stage.label}
+          onClose={() => state.setExpanded(false)}
+          actions={
+            <a href={full.download.url} download={full.download.fileName} className="flex h-10 items-center gap-1.5 rounded-full bg-white/10 px-4 text-sm font-semibold text-white hover:bg-white/20">
+              <DownloadIcon size={16} /> Baixar
+            </a>
+          }
+        />
+      )}
 
       <aside className="order-2 flex flex-col gap-4 lg:order-1 lg:col-span-3">
         <StyleSummary
@@ -42,6 +64,7 @@ export function ChoiceStep({ staging, onEditStyle }: { staging: StagingDetailDTO
           standard={staging.standard}
           colors={staging.furnitureColors}
           referenceCount={staging.references.length}
+          instructions={staging.customInstructions}
           onEdit={onEditStyle}
         />
 

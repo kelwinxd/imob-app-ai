@@ -7,13 +7,30 @@ import {
 } from "@imob/shared";
 import { db } from "../../db/client";
 import { stagingPhotos, stagingReferences, stagings } from "../../db/schema";
-import { badRequest, conflict, notFound } from "../../shared/http";
+import { getAi } from "../../shared/ai";
+import { badRequest, conflict, notFound, unprocessable } from "../../shared/http";
 import { keys, storage } from "../../shared/storage";
 import { appendEvent } from "../audit/audit.service";
 import { getOwnedProperty } from "../properties/properties.service";
 import { deriveStagingStatus, getOwnedStaging, getStagingDetail, loadBundle, toStagingDetail } from "./stagings.model";
 
 const BUSY_MESSAGE = "Esta decoração está sendo gerada ou publicada. Aguarde terminar.";
+
+// Segunda barreira do pedido livre (a primeira são as regras fixas no schema): a IA confere se é só sobre decoração.
+async function assertInstructionInScope(text: string) {
+  let review;
+  try {
+    review = await getAi().reviewInstruction(text);
+  } catch (err) {
+    console.error("[revisar pedido]", err);
+    throw unprocessable("Não foi possível revisar o pedido agora. Tente de novo em instantes.", "INSTRUCTION_REVIEW_FAILED");
+  }
+  if (!review.permitido) {
+    const reason = review.motivo.trim();
+    const message = reason ? `Pedido recusado: ${reason.charAt(0).toLowerCase()}${reason.slice(1).replace(/\.?$/, ".")}` : "O pedido precisa ser só sobre móveis, decoração e disposição dos móveis.";
+    throw unprocessable(message, "INSTRUCTION_OUT_OF_SCOPE");
+  }
+}
 
 async function assertNotBusy(userId: string, stagingId: string) {
   const { staging, property } = await getOwnedStaging(userId, stagingId);
@@ -35,9 +52,13 @@ export async function createStaging(userId: string, propertyId: string, input: C
 }
 
 export async function updateStaging(userId: string, stagingId: string, input: UpdateStagingInput): Promise<StagingDetailDTO> {
-  const { status } = await assertNotBusy(userId, stagingId);
-  const changesLook = input.style !== undefined || input.standard !== undefined || input.furnitureColors !== undefined;
+  const { status, staging } = await assertNotBusy(userId, stagingId);
+  const changesLook =
+    input.style !== undefined || input.standard !== undefined || input.furnitureColors !== undefined || input.customInstructions !== undefined;
   if (changesLook && status === "generating") throw conflict(BUSY_MESSAGE);
+  if (input.customInstructions && input.customInstructions !== staging.customInstructions) {
+    await assertInstructionInScope(input.customInstructions);
+  }
   const patch = Object.fromEntries(Object.entries(input).filter(([, v]) => v !== undefined));
   if (Object.keys(patch).length) await db.update(stagings).set(patch).where(eq(stagings.id, stagingId));
   return getStagingDetail(userId, stagingId);

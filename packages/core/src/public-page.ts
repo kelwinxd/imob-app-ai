@@ -1,6 +1,6 @@
 import {
   BRAND_COLOR_PATTERN, DEFAULT_BRAND_COLOR, formatPhoneBR, formatPriceBRL, PURPOSE_LABELS,
-  type PropertyDetails,
+  type PageCompareMode, type PageTheme, type PropertyDetails,
 } from "@imob/shared";
 import { escapeXml as esc, joinPt } from "./seal";
 
@@ -27,6 +27,8 @@ export interface PublicPageInput {
   photos: PublicPagePhoto[];
   brand?: PublicPageBrand;
   details?: PropertyDetails;
+  theme?: PageTheme;
+  compare?: PageCompareMode;
 }
 
 const plural = (n: number, one: string, many: string) => `${n.toLocaleString("pt-BR")} ${n === 1 ? one : many}`;
@@ -54,9 +56,17 @@ function readableOn(hex: string): string {
 const waDigits = (digits: string) => (digits.length === 10 || digits.length === 11 ? `55${digits}` : digits);
 const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join("") || "•";
 
-const CSS = (brand: string, onBrand: string) => `
+const DARK_VARS = ":root{--bg:#141413;--fg:#ecebe6;--muted:#a3a29b;--card:#1d1d1b;--line:#33322e}";
+
+function themeCss(theme: PageTheme): string {
+  if (theme === "escuro") return `${DARK_VARS}\nhtml{color-scheme:dark}`;
+  if (theme === "claro") return "html{color-scheme:light}";
+  return `@media (prefers-color-scheme:dark){${DARK_VARS}}`;
+}
+
+const CSS = (brand: string, onBrand: string, theme: PageTheme) => `
 :root{--brand:${brand};--on-brand:${onBrand};--bg:#fafaf8;--fg:#1d1d1b;--muted:#5f5f5a;--card:#fff;--line:#e7e5df}
-@media (prefers-color-scheme:dark){:root{--bg:#141413;--fg:#ecebe6;--muted:#a3a29b;--card:#1d1d1b;--line:#33322e}}
+${themeCss(theme)}
 *{box-sizing:border-box}html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 a{color:inherit}
@@ -107,9 +117,15 @@ figure{margin:0}.par img{width:100%;height:auto;display:block;border-radius:10px
 .contact .btn{background:var(--on-brand);color:var(--brand)}
 footer{border-top:1px solid var(--line);color:var(--muted);font-size:13px;padding:20px 0 36px}
 footer p{margin:4px 0}
+.disclosure{border-top:1px solid var(--line);padding:20px 0 8px;font-size:14px;color:var(--muted)}
+.disclosure summary{cursor:pointer;color:var(--fg);font-weight:600;list-style-position:outside}
+.disclosure p{margin:8px 0 0}
+.mini{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:14px}
+.mini img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block}
+.mini figcaption{font-size:12px;margin-top:4px}
 `;
 
-export function renderPublicPage({ title, publishedAt, registry, photos, brand, details }: PublicPageInput): string {
+export function renderPublicPage({ title, publishedAt, registry, photos, brand, details, theme = "auto", compare = "completo" }: PublicPageInput): string {
   const color = brand && BRAND_COLOR_PATTERN.test(brand.color) ? brand.color : DEFAULT_BRAND_COLOR;
   const onBrand = readableOn(color);
   const cover = photos[0];
@@ -140,7 +156,7 @@ export function renderPublicPage({ title, publishedAt, registry, photos, brand, 
       ${whatsappHref ? `<a class="btn btn-brand" href="${esc(whatsappHref)}" target="_blank" rel="noopener">Agendar visita</a>` : ""}
       ${phoneHref ? `<a class="btn btn-ghost" href="${esc(phoneHref)}">Ligar</a>` : ""}
     </div>` : ""}
-    <p class="note">As fotos foram decoradas virtualmente com IA; os móveis são ilustrativos. <a href="#originais">Ver as fotos originais</a>.</p>
+    <p class="note">${compare === "resumido" ? "Imagens decoradas com IA; móveis ilustrativos." : "As fotos foram decoradas virtualmente com IA; os móveis são ilustrativos."} <a href="#originais">Ver as fotos originais</a>.</p>
   </div>
 </section>`;
 
@@ -153,6 +169,17 @@ export function renderPublicPage({ title, publishedAt, registry, photos, brand, 
         .map((p) => `<figure><a href="${esc(p.decoratedSrc)}" target="_blank" rel="noopener"><img src="${esc(p.decoratedSrc)}" alt="${esc(p.roomLabel)}" loading="lazy"></a><figcaption>${esc(p.roomLabel)}</figcaption></figure>`)
         .join("")}</div></section>`
     : "";
+
+  // Modo resumido: o aviso de IA continua obrigatório, mas fica curto no fim e as originais ficam recolhidas.
+  const compactOriginals = `<section class="disclosure" id="originais">
+  <details>
+    <summary>Imagens decoradas virtualmente com IA · ver fotos originais</summary>
+    <p>Os móveis e objetos são ilustrativos e não acompanham o imóvel.</p>
+    <div class="mini">${photos
+      .map((p) => `<figure><img src="${esc(p.originalSrc)}" alt="${esc(p.roomLabel)}: foto original" loading="lazy"><figcaption>${esc(p.roomLabel)} · original</figcaption></figure>`)
+      .join("")}</div>
+  </details>
+</section>`;
 
   const originals = `<section class="block" id="originais">
   <h2>Fotos originais</h2>
@@ -190,7 +217,7 @@ export function renderPublicPage({ title, publishedAt, registry, photos, brand, 
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="${esc(color)}">
 <title>${esc(title)}${brand ? ` · ${esc(brand.name)}` : ""}</title>
-<style>${CSS(color, onBrand)}</style>
+<style>${CSS(color, onBrand, theme)}</style>
 </head>
 <body>
 ${header}
@@ -198,8 +225,7 @@ ${header}
 ${hero}
 ${description}
 ${gallery}
-${originals}
-${contact}
+${compare === "resumido" ? `${contact}\n${compactOriginals}` : `${originals}\n${contact}`}
 </main>
 <footer><div class="wrap">
   ${footerInfo ? `<p>${esc(footerInfo)}</p>` : ""}

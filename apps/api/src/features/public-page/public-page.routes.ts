@@ -39,6 +39,8 @@ publicPageRouter.get("/:slug", async (req, res) => {
     title: property.title,
     publishedAt: staging.publishedAt!,
     registry: staging.auditHead ?? "",
+    theme: staging.pageTheme,
+    compare: staging.pageCompare,
     brand: {
       name: profile.companyName,
       color: profile.brandColor,

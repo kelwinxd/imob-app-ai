@@ -138,6 +138,7 @@ export function needsGeneration(b: StagingBundle, p: EffectivePhoto): boolean {
     gen.standard !== b.staging.standard ||
     gen.room !== p.photo.roomConfirmed ||
     !sameSet(gen.options.furnitureColors, b.staging.furnitureColors) ||
+    (gen.options.customInstructions ?? "") !== b.staging.customInstructions ||
     !sameSet(gen.options.referenceSha256, b.references.map((r) => r.sha256))
   );
 }
@@ -173,6 +174,9 @@ export function toStagingDetail(b: StagingBundle): StagingDetailDTO {
     propertyId: b.property.id,
     propertyTitle: b.property.title,
     furnitureColors: s.furnitureColors,
+    customInstructions: s.customInstructions,
+    pageTheme: s.pageTheme,
+    pageCompare: s.pageCompare,
     references: b.references.map((r) => ({ id: r.id, url: `/api/stagings/${s.id}/references/${r.id}` })),
     publishError: s.publishError,
     photos: photoDTOs,
